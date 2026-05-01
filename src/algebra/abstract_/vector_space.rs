@@ -13,6 +13,7 @@ where
     ///   - v.plus(u).scale(a) = v.scale(a).plus(u.scale(a))
     ///   - v.scale(a.plus(b)) = v.scale(a).plus(v.scale(b))
     fn scale(self, c: Self::Over) -> Self;
+    // TODO specify left or right module? Or what side we scale on?
 }
 
 impl<R, A, B> VectorSpace for (A, B)

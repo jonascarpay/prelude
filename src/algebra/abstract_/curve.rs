@@ -6,6 +6,7 @@ pub trait Curve {
 
 pub trait DifferentiableCurve: Curve {
     type Derivative;
+    fn derivative(self) -> Self::Derivative;
 }
 
 // todo: pub trait Surface
