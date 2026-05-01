@@ -8,9 +8,106 @@ pub trait Ring: Additive {
     fn one() -> Self;
 }
 
-pub trait Field: Ring {
-    /// Inverse element for `mult`
-    fn recip(self) -> Self;
+impl<A, B> Ring for (A, B)
+where
+    A: Ring,
+    B: Ring,
+{
+    fn mult(self, rhs: Self) -> Self {
+        let (a0, a1) = self;
+        let (b0, b1) = rhs;
+        (a0.mult(b0), a1.mult(b1))
+    }
 
-    fn div(self, rhs: Self) -> Self;
+    fn one() -> Self {
+        (A::one(), B::one())
+    }
 }
+
+impl<A, B, C> Ring for (A, B, C)
+where
+    A: Ring,
+    B: Ring,
+    C: Ring,
+{
+    fn mult(self, rhs: Self) -> Self {
+        let (a0, a1, a2) = self;
+        let (b0, b1, b2) = rhs;
+        (a0.mult(b0), a1.mult(b1), a2.mult(b2))
+    }
+
+    fn one() -> Self {
+        (A::one(), B::one(), C::one())
+    }
+}
+
+impl<A, B, C, D> Ring for (A, B, C, D)
+where
+    A: Ring,
+    B: Ring,
+    C: Ring,
+    D: Ring,
+{
+    fn mult(self, rhs: Self) -> Self {
+        let (a0, a1, a2, a3) = self;
+        let (b0, b1, b2, b3) = rhs;
+        (a0.mult(b0), a1.mult(b1), a2.mult(b2), a3.mult(b3))
+    }
+
+    fn one() -> Self {
+        (A::one(), B::one(), C::one(), D::one())
+    }
+}
+
+impl<T: Ring, const N: usize> Ring for [T; N] {
+    fn mult(self, rhs: Self) -> Self {
+        let mut lhs = self.into_iter();
+        let mut rhs = rhs.into_iter();
+        std::array::from_fn(|_| lhs.next().unwrap().mult(rhs.next().unwrap()))
+    }
+
+    fn one() -> Self {
+        std::array::from_fn(|_| T::one())
+    }
+}
+
+macro_rules! impl_ring_modular {
+    ($t:ty) => {
+        impl Ring for $t {
+            fn mult(self, rhs: Self) -> Self {
+                self.wrapping_mul(rhs)
+            }
+            fn one() -> Self {
+                1
+            }
+        }
+    };
+}
+
+macro_rules! impl_ring_float {
+    ($t:ty) => {
+        impl Ring for $t {
+            fn mult(self, rhs: Self) -> Self {
+                self * rhs
+            }
+            fn one() -> Self {
+                1.0
+            }
+        }
+    };
+}
+
+impl_ring_modular!(i8);
+impl_ring_modular!(i16);
+impl_ring_modular!(i32);
+impl_ring_modular!(i64);
+impl_ring_modular!(i128);
+impl_ring_modular!(isize);
+impl_ring_modular!(u8);
+impl_ring_modular!(u16);
+impl_ring_modular!(u32);
+impl_ring_modular!(u64);
+impl_ring_modular!(u128);
+impl_ring_modular!(usize);
+impl_ring_float!(f32);
+impl_ring_float!(f64);
