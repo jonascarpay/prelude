@@ -1,5 +1,5 @@
-use crate::algebra::additive::Additive;
-use crate::algebra::ring::Ring;
+use super::additive::Additive;
+use super::ring::Ring;
 
 pub trait VectorSpace: Additive
 where

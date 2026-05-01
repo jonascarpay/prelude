@@ -1,4 +1,4 @@
-use crate::algebra::additive::Additive;
+use super::additive::Additive;
 
 pub trait Ring: Additive {
     /// An associative operation, distributive w.r.t. `plus`
