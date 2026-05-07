@@ -1,11 +1,13 @@
 use super::additive::Additive;
 
-pub trait Ring: Additive {
+pub trait Ring: Additive + Sized {
     /// An associative operation, distributive w.r.t. `plus`
     fn mult(self, rhs: Self) -> Self;
 
     /// Identity element for `mult` such that `zero() != one()`
-    fn one() -> Self;
+    fn one() -> Self {
+        Self::from_integer(1)
+    }
 
     fn from_integer(i: isize) -> Self;
 }
