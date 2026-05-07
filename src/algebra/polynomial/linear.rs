@@ -15,6 +15,13 @@ impl<T: Additive> Additive for Linear<T> {
         }
     }
 
+    fn minus(self, rhs: Self) -> Self {
+        Linear {
+            c1: self.c1.minus(rhs.c1),
+            c0: self.c0.minus(rhs.c0),
+        }
+    }
+
     fn zero() -> Self {
         Linear {
             c1: T::zero(),

@@ -1,5 +1,5 @@
 /// An additive group
-pub trait Additive {
+pub trait Additive: Sized {
     /// An associative, commutative operation
     fn plus(self, rhs: Self) -> Self;
 
@@ -8,6 +8,10 @@ pub trait Additive {
 
     /// The inverse element for `plus`
     fn negate(self) -> Self;
+
+    fn minus(self, rhs: Self) -> Self {
+        self.plus(rhs.negate())
+    }
 
     fn is_zero(&self) -> bool;
 }
@@ -31,6 +35,11 @@ where
         let (b0, b1) = rhs;
         (a0.plus(b0), a1.plus(b1))
     }
+    fn minus(self, rhs: Self) -> Self {
+        let (a0, a1) = self;
+        let (b0, b1) = rhs;
+        (a0.minus(b0), a1.minus(b1))
+    }
 
     fn zero() -> Self {
         (A::zero(), B::zero())
@@ -40,6 +49,7 @@ where
         let (a0, a1) = self;
         (a0.negate(), a1.negate())
     }
+
     fn is_zero(&self) -> bool {
         let (a0, a1) = self;
         a0.is_zero() && a1.is_zero()
@@ -56,6 +66,11 @@ where
         let (a0, a1, a2) = self;
         let (b0, b1, b2) = rhs;
         (a0.plus(b0), a1.plus(b1), a2.plus(b2))
+    }
+    fn minus(self, rhs: Self) -> Self {
+        let (a0, a1, a2) = self;
+        let (b0, b1, b2) = rhs;
+        (a0.minus(b0), a1.minus(b1), a2.minus(b2))
     }
 
     fn zero() -> Self {
@@ -84,6 +99,11 @@ where
         let (b0, b1, b2, b3) = rhs;
         (a0.plus(b0), a1.plus(b1), a2.plus(b2), a3.plus(b3))
     }
+    fn minus(self, rhs: Self) -> Self {
+        let (a0, a1, a2, a3) = self;
+        let (b0, b1, b2, b3) = rhs;
+        (a0.minus(b0), a1.minus(b1), a2.minus(b2), a3.minus(b3))
+    }
 
     fn zero() -> Self {
         (A::zero(), B::zero(), C::zero(), D::zero())
@@ -107,6 +127,12 @@ impl<T: Additive, const N: usize> Additive for [T; N] {
         let mut rhs = rhs.into_iter();
         std::array::from_fn(|_| lhs.next().unwrap().plus(rhs.next().unwrap()))
     }
+    fn minus(self, rhs: Self) -> Self {
+        // Confirmed this unrolls and vectorizes cleanly
+        let mut lhs = self.into_iter();
+        let mut rhs = rhs.into_iter();
+        std::array::from_fn(|_| lhs.next().unwrap().minus(rhs.next().unwrap()))
+    }
 
     fn zero() -> Self {
         std::array::from_fn(|_| T::zero())
@@ -127,6 +153,9 @@ macro_rules! impl_additive_modular {
             fn plus(self, rhs: Self) -> Self {
                 self.wrapping_add(rhs)
             }
+            fn minus(self, rhs: Self) -> Self {
+                self.wrapping_sub(rhs)
+            }
             fn zero() -> Self {
                 0
             }
@@ -145,6 +174,9 @@ macro_rules! impl_additive_float {
         impl Additive for $t {
             fn plus(self, rhs: Self) -> Self {
                 self + rhs
+            }
+            fn minus(self, rhs: Self) -> Self {
+                self - rhs
             }
             fn zero() -> Self {
                 0.0

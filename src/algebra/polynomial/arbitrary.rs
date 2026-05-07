@@ -48,6 +48,18 @@ impl<T: Additive + Copy> Additive for Polynomial<T> {
         }
         Polynomial { coeffs }.shrink()
     }
+    fn minus(self, rhs: Self) -> Self {
+        let (mut coeffs, addend) = if self.coeffs.len() >= rhs.coeffs.len() {
+            (self.coeffs, rhs.coeffs)
+        } else {
+            (rhs.coeffs, self.coeffs)
+        };
+        for (i, x) in addend.into_iter().enumerate() {
+            let r = &mut coeffs[i];
+            *r = r.minus(x);
+        }
+        Polynomial { coeffs }.shrink()
+    }
     fn negate(self) -> Self {
         Polynomial {
             coeffs: self.coeffs.into_iter().map(Additive::negate).collect(),
