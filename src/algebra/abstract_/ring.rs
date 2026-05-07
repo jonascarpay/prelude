@@ -6,6 +6,8 @@ pub trait Ring: Additive {
 
     /// Identity element for `mult` such that `zero() != one()`
     fn one() -> Self;
+
+    fn from_integer(i: isize) -> Self;
 }
 
 impl<A, B> Ring for (A, B)
@@ -21,6 +23,10 @@ where
 
     fn one() -> Self {
         (A::one(), B::one())
+    }
+
+    fn from_integer(i: isize) -> Self {
+        (A::from_integer(i), B::from_integer(i))
     }
 }
 
@@ -38,6 +44,9 @@ where
 
     fn one() -> Self {
         (A::one(), B::one(), C::one())
+    }
+    fn from_integer(i: isize) -> Self {
+        (A::from_integer(i), B::from_integer(i), C::from_integer(i))
     }
 }
 
@@ -57,6 +66,14 @@ where
     fn one() -> Self {
         (A::one(), B::one(), C::one(), D::one())
     }
+    fn from_integer(i: isize) -> Self {
+        (
+            A::from_integer(i),
+            B::from_integer(i),
+            C::from_integer(i),
+            D::from_integer(i),
+        )
+    }
 }
 
 impl<T: Ring, const N: usize> Ring for [T; N] {
@@ -69,6 +86,10 @@ impl<T: Ring, const N: usize> Ring for [T; N] {
     fn one() -> Self {
         std::array::from_fn(|_| T::one())
     }
+
+    fn from_integer(i: isize) -> Self {
+        std::array::from_fn(|_| T::from_integer(i))
+    }
 }
 
 macro_rules! impl_ring_modular {
@@ -79,6 +100,9 @@ macro_rules! impl_ring_modular {
             }
             fn one() -> Self {
                 1
+            }
+            fn from_integer(i: isize) -> Self {
+                i as $t
             }
         }
     };
@@ -92,6 +116,9 @@ macro_rules! impl_ring_float {
             }
             fn one() -> Self {
                 1.0
+            }
+            fn from_integer(i: isize) -> Self {
+                i as $t
             }
         }
     };
