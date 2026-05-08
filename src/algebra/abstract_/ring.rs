@@ -126,6 +126,21 @@ macro_rules! impl_ring_float {
     };
 }
 
+/// Emit `Mul<Self>` impl that forwards to `Ring::mult`.
+///
+/// Usage: `impl_ring_ops!([T: Ring + Copy] Polynomial<T>);`
+#[macro_export]
+macro_rules! impl_ring_ops {
+    ([$($g:tt)*] $t:ty) => {
+        impl<$($g)*> ::core::ops::Mul for $t {
+            type Output = Self;
+            fn mul(self, rhs: Self) -> Self {
+                <Self as $crate::algebra::abstract_::Ring>::mult(self, rhs)
+            }
+        }
+    };
+}
+
 impl_ring_modular!(i8);
 impl_ring_modular!(i16);
 impl_ring_modular!(i32);

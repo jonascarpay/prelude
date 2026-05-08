@@ -191,6 +191,33 @@ macro_rules! impl_additive_float {
     };
 }
 
+/// Emit `Add`, `Sub`, `Neg` impls that forward to `Additive`.
+///
+/// Usage: `impl_additive_ops!([T: Additive] V2<T>);`
+#[macro_export]
+macro_rules! impl_additive_ops {
+    ([$($g:tt)*] $t:ty) => {
+        impl<$($g)*> ::core::ops::Add for $t {
+            type Output = Self;
+            fn add(self, rhs: Self) -> Self {
+                <Self as $crate::algebra::abstract_::Additive>::plus(self, rhs)
+            }
+        }
+        impl<$($g)*> ::core::ops::Sub for $t {
+            type Output = Self;
+            fn sub(self, rhs: Self) -> Self {
+                <Self as $crate::algebra::abstract_::Additive>::minus(self, rhs)
+            }
+        }
+        impl<$($g)*> ::core::ops::Neg for $t {
+            type Output = Self;
+            fn neg(self) -> Self {
+                <Self as $crate::algebra::abstract_::Additive>::negate(self)
+            }
+        }
+    };
+}
+
 impl_additive_modular!(i8);
 impl_additive_modular!(i16);
 impl_additive_modular!(i32);

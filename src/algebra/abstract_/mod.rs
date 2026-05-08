@@ -11,3 +11,5 @@ pub use {
     ring::Ring,
     vector_space::VectorSpace,
 };
+
+pub use crate::{impl_additive_ops, impl_ring_ops, impl_vector_space_ops};

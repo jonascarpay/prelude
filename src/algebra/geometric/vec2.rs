@@ -1,4 +1,6 @@
-use super::super::abstract_::{Additive, Ring, VectorSpace};
+use super::super::abstract_::{
+    Additive, Ring, VectorSpace, impl_additive_ops, impl_vector_space_ops,
+};
 
 pub struct V2<T> {
     pub x: T,
@@ -55,3 +57,6 @@ impl<T: Ring + Copy> VectorSpace for V2<T> {
         }
     }
 }
+
+impl_additive_ops!([T: Additive] V2<T>);
+impl_vector_space_ops!([T: Ring + Copy] V2<T>);

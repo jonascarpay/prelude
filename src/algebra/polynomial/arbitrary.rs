@@ -1,4 +1,7 @@
-use super::super::abstract_::{Additive, Curve, DifferentiableCurve, Ring, VectorSpace};
+use super::super::abstract_::{
+    Additive, Curve, DifferentiableCurve, Ring, VectorSpace, impl_additive_ops, impl_ring_ops,
+    impl_vector_space_ops,
+};
 
 pub struct Polynomial<T> {
     // The last element should be nonzero
@@ -107,6 +110,10 @@ impl<T: Ring + Copy> Ring for Polynomial<T> {
         }
     }
 }
+
+impl_additive_ops!([T: Additive + Copy] Polynomial<T>);
+impl_vector_space_ops!([T: Ring + Copy + PartialEq] Polynomial<T>);
+impl_ring_ops!([T: Ring + Copy] Polynomial<T>);
 
 impl<T: Ring + Copy> Curve for Polynomial<T> {
     type Domain = T;

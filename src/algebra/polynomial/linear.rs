@@ -1,4 +1,7 @@
-use super::super::abstract_::{Additive, Curve, DifferentiableCurve, Ring, VectorSpace};
+use super::super::abstract_::{
+    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
+    VectorSpace,
+};
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
 #[derive(Clone, Copy, Debug)]
@@ -50,6 +53,9 @@ impl<T: Ring + Copy> VectorSpace for Linear<T> {
         }
     }
 }
+
+impl_additive_ops!([T: Additive] Linear<T>);
+impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
 
 impl<T: Ring + Copy> Curve for Linear<T> {
     type Domain = T;

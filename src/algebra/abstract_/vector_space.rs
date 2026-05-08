@@ -66,6 +66,21 @@ where
     }
 }
 
+/// Emit `Mul<Self::Over>` impl that forwards to `VectorSpace::scale`.
+///
+/// Usage: `impl_vector_space_ops!([T: Ring + Copy] V2<T>);`
+#[macro_export]
+macro_rules! impl_vector_space_ops {
+    ([$($g:tt)*] $t:ty) => {
+        impl<$($g)*> ::core::ops::Mul<<Self as $crate::algebra::abstract_::VectorSpace>::Over> for $t {
+            type Output = Self;
+            fn mul(self, c: <Self as $crate::algebra::abstract_::VectorSpace>::Over) -> Self {
+                <Self as $crate::algebra::abstract_::VectorSpace>::scale(self, c)
+            }
+        }
+    };
+}
+
 impl<R, T, const N: usize> VectorSpace for [T; N]
 where
     R: Ring + Clone,
