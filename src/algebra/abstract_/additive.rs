@@ -8,12 +8,17 @@ pub trait Additive {
 
     /// The inverse element for `plus`
     fn negate(self) -> Self;
+
+    fn is_zero(&self) -> bool;
 }
 
 impl Additive for () {
     fn plus(self, _rhs: Self) -> Self {}
     fn zero() -> Self {}
     fn negate(self) -> Self {}
+    fn is_zero(&self) -> bool {
+        true
+    }
 }
 
 impl<A, B> Additive for (A, B)
@@ -34,6 +39,10 @@ where
     fn negate(self) -> Self {
         let (a0, a1) = self;
         (a0.negate(), a1.negate())
+    }
+    fn is_zero(&self) -> bool {
+        let (a0, a1) = self;
+        a0.is_zero() && a1.is_zero()
     }
 }
 
@@ -56,6 +65,10 @@ where
     fn negate(self) -> Self {
         let (a0, a1, a2) = self;
         (a0.negate(), a1.negate(), a2.negate())
+    }
+    fn is_zero(&self) -> bool {
+        let (a0, a1, a2) = self;
+        a0.is_zero() && a1.is_zero() && a2.is_zero()
     }
 }
 
@@ -80,6 +93,11 @@ where
         let (a0, a1, a2, a3) = self;
         (a0.negate(), a1.negate(), a2.negate(), a3.negate())
     }
+
+    fn is_zero(&self) -> bool {
+        let (a0, a1, a2, a3) = self;
+        a0.is_zero() && a1.is_zero() && a2.is_zero() && a3.is_zero()
+    }
 }
 
 impl<T: Additive, const N: usize> Additive for [T; N] {
@@ -97,6 +115,10 @@ impl<T: Additive, const N: usize> Additive for [T; N] {
     fn negate(self) -> Self {
         self.map(T::negate)
     }
+
+    fn is_zero(&self) -> bool {
+        self.iter().all(T::is_zero)
+    }
 }
 
 macro_rules! impl_additive_modular {
@@ -110,6 +132,9 @@ macro_rules! impl_additive_modular {
             }
             fn negate(self) -> Self {
                 self.wrapping_neg()
+            }
+            fn is_zero(&self) -> bool {
+                *self == 0
             }
         }
     };
@@ -126,6 +151,9 @@ macro_rules! impl_additive_float {
             }
             fn negate(self) -> Self {
                 -self
+            }
+            fn is_zero(&self) -> bool {
+                *self == 0.0
             }
         }
     };

@@ -28,6 +28,10 @@ impl<T: Additive> Additive for Linear<T> {
             c0: self.c0.negate(),
         }
     }
+
+    fn is_zero(&self) -> bool {
+        self.c0.is_zero() && self.c1.is_zero()
+    }
 }
 
 impl<T: Ring + Copy> VectorSpace for Linear<T> {
