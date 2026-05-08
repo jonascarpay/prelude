@@ -1,4 +1,4 @@
-use crate::algebra::geometric::complex::Complex;
+use crate::algebra::{abstract_::InnerProductSpace, geometric::complex::Complex};
 
 use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
@@ -85,19 +85,29 @@ impl<T: Additive> Additive for V2<T> {
     }
 }
 
-impl<T: Ring + Copy> VectorSpace for V2<T> {
+impl<T: Ring + Clone> VectorSpace for V2<T> {
     type Over = T;
 
     fn scale(self, c: Self::Over) -> Self {
         V2 {
-            x: self.x.mult(c),
+            x: self.x.mult(c.clone()),
             y: self.y.mult(c),
         }
     }
 }
 
+impl<T: Ring + Clone> InnerProductSpace for V2<T> {
+    fn quadrance(self) -> Self::Over {
+        self.x.sq().plus(self.y.sq())
+    }
+
+    fn inner(self, rhs: Self) -> Self::Over {
+        self.x.mult(rhs.x).plus(self.y.mult(rhs.y))
+    }
+}
+
 impl_additive_ops!([T: Additive] V2<T>);
-impl_vector_space_ops!([T: Ring + Copy] V2<T>);
+impl_vector_space_ops!([T: Ring + Clone] V2<T>);
 
 impl<T: Ring + Copy> std::ops::Mul<Complex<T>> for V2<T> {
     type Output = V2<T>;

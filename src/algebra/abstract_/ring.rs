@@ -1,6 +1,6 @@
 use super::additive::Additive;
 
-pub trait Ring: Additive + Sized {
+pub trait Ring: Additive + Sized + Clone {
     /// An associative operation, distributive w.r.t. `plus`
     fn mult(self, rhs: Self) -> Self;
 
@@ -10,6 +10,10 @@ pub trait Ring: Additive + Sized {
     }
 
     fn from_integer(i: isize) -> Self;
+
+    fn sq(self) -> Self {
+        self.clone().mult(self)
+    }
 }
 
 impl<A, B> Ring for (A, B)

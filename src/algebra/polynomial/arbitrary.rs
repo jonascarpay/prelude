@@ -1,8 +1,10 @@
 use super::super::abstract_::{
-    Additive, Curve, DifferentiableCurve, Ring, VectorSpace, impl_additive_ops, impl_ring_ops,
-    impl_vector_space_ops,
+    impl_additive_ops, impl_ring_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve,
+    Ring, VectorSpace,
 };
 
+// An arbitrary-order univariate polynomial.
+#[derive(Debug, Clone)]
 pub struct Polynomial<T> {
     // The last element should be nonzero
     // TODO: smallvec

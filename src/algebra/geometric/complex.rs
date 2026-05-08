@@ -1,7 +1,10 @@
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
+    impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
 
+#[derive(Debug, Clone, Copy)]
+/// A complex number of the form a + bi.
+/// We tie it into the geometric algebra by interpreting it as the even subalgebra of Cl(2,0,0)
 pub struct Complex<T> {
     pub s: T,
     pub xy: T,
@@ -19,6 +22,13 @@ impl<T: Ring + Copy> Complex<T> {
     }
     pub fn basis() -> [Self; 2] {
         [Complex::one(), Self::xy()]
+    }
+    // This is the same as reverse, and might be moved to a type class at some point
+    pub fn conjugate(self) -> Self {
+        Complex {
+            s: self.s,
+            xy: self.xy.negate(),
+        }
     }
 }
 
@@ -60,6 +70,34 @@ impl<T: Ring + Copy> VectorSpace for Complex<T> {
         Complex {
             s: self.s.mult(c),
             xy: self.xy.mult(c),
+        }
+    }
+}
+
+impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
+    fn quadrance(self) -> Self::Over {
+        // Q(a + bi)
+        // (a + bi)(a - bi)
+        // aa - abi + bia + bb
+        // aa + bb
+        self.s.sq().plus(self.xy.sq())
+    }
+
+    fn inner(self, rhs: Self) -> Self::Over {
+        // 1/2 (Q(u+v) - Q(u) - Q(v))
+        // 1/2 (Q((a+c) + (b+d)i) - Q(a + ci) - Q(b + di))
+        // 1/2 (aa + cc + 2ac + bb + dd + 2bd - aa - cc - bb - dd)
+        // 1/2 (2ac + 2bd)
+        // ac + bd
+        self.s.mult(rhs.s).plus(self.xy.plus(rhs.xy))
+    }
+}
+
+impl<T: Ring> From<T> for Complex<T> {
+    fn from(value: T) -> Self {
+        Complex {
+            s: value,
+            xy: T::zero(),
         }
     }
 }
