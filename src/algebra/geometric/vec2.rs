@@ -1,5 +1,5 @@
 use super::super::abstract_::{
-    Additive, Ring, VectorSpace, impl_additive_ops, impl_vector_space_ops,
+    impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
 };
 
 pub struct V2<T> {
@@ -10,6 +10,24 @@ pub struct V2<T> {
 impl<T> V2<T> {
     pub fn new(x: T, y: T) -> V2<T> {
         V2 { x, y }
+    }
+    pub fn xunit() -> Self
+    where
+        T: Ring,
+    {
+        V2 {
+            x: T::one(),
+            y: T::zero(),
+        }
+    }
+    pub fn yunit() -> Self
+    where
+        T: Ring,
+    {
+        V2 {
+            y: T::zero(),
+            x: T::one(),
+        }
     }
 }
 
