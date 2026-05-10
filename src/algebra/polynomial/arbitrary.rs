@@ -2,6 +2,9 @@ use super::super::abstract_::{
     impl_additive_ops, impl_ring_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve,
     Ring, VectorSpace,
 };
+use super::cubic::Cubic;
+use super::linear::Linear;
+use super::quadratic::Quadratic;
 
 // An arbitrary-order univariate polynomial.
 #[derive(Debug, Clone)]
@@ -15,12 +18,23 @@ impl<T> Polynomial<T> {
     pub fn order(&self) -> usize {
         self.coeffs.len() - 1
     }
+
     pub fn get(&self, coeff: usize) -> T
     where
         T: Ring + Copy,
     {
         self.coeffs.get(coeff).map_or(T::zero(), |a| *a)
     }
+
+    /// Construct a polynomial from a list of coefficients, with each coefficient at index n
+    /// corresponding to the term x^n.
+    pub fn from_coefficients(coeffs: Vec<T>) -> Self
+    where
+        T: Additive,
+    {
+        Polynomial { coeffs }.shrink()
+    }
+
     fn shrink(self) -> Self
     where
         T: Additive,
@@ -143,5 +157,23 @@ impl<T: Ring + Copy> DifferentiableCurve for Polynomial<T> {
                 .map(|(i, x)| x.mult(T::from_integer(i as isize)))
                 .collect(),
         }
+    }
+}
+
+impl<T: Additive> From<Linear<T>> for Polynomial<T> {
+    fn from(l: Linear<T>) -> Self {
+        Polynomial::from_coefficients(vec![l.c0, l.c1])
+    }
+}
+
+impl<T: Additive> From<Quadratic<T>> for Polynomial<T> {
+    fn from(q: Quadratic<T>) -> Self {
+        Polynomial::from_coefficients(vec![q.c0, q.c1, q.c2])
+    }
+}
+
+impl<T: Additive> From<Cubic<T>> for Polynomial<T> {
+    fn from(c: Cubic<T>) -> Self {
+        Polynomial::from_coefficients(vec![c.c0, c.c1, c.c2, c.c3])
     }
 }
