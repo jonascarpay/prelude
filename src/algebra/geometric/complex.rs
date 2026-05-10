@@ -1,3 +1,5 @@
+use crate::impl_ring_ops;
+
 use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
@@ -132,3 +134,4 @@ impl<T: Ring + Copy> Ring for Complex<T> {
 
 impl_additive_ops!([T: Additive] Complex<T>);
 impl_vector_space_ops!([T: Ring + Copy] Complex<T>);
+impl_ring_ops!([T: Ring + Copy] Complex<T>);

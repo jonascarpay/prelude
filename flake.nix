@@ -41,6 +41,7 @@
             rust-env
             pkgs.cargo-show-asm
             pkgs.bacon
+            pkgs.cargo-show-asm
           ];
         };
         packages = rec {

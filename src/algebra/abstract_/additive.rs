@@ -16,6 +16,15 @@ pub trait Additive: Sized {
     fn is_zero(&self) -> bool;
 }
 
+#[inline]
+pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(mut iter: I) -> T {
+    let mut res = T::zero();
+    while let Some(c) = iter.next() {
+        res = res.plus(c);
+    }
+    res
+}
+
 impl Additive for () {
     fn plus(self, _rhs: Self) -> Self {}
     fn zero() -> Self {}
