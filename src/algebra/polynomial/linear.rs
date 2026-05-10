@@ -71,3 +71,9 @@ impl<T: Ring + Copy> DifferentiableCurve for Linear<T> {
         self.c1
     }
 }
+
+impl<T: Additive> From<T> for Linear<T> {
+    fn from(c0: T) -> Self {
+        Linear { c0, ..Self::zero() }
+    }
+}
