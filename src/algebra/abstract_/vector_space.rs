@@ -92,3 +92,11 @@ where
         self.map(|x| x.scale(c.clone()))
     }
 }
+
+pub fn linear_combination<T: VectorSpace, const N: usize>(
+    weights: [T::Over; N],
+    vecs: [T; N],
+) -> T {
+    use std::iter::zip;
+    zip(weights, vecs).fold(T::zero(), |s, (c, a)| s.plus(a.scale(c)))
+}

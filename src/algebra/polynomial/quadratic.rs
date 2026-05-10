@@ -1,6 +1,8 @@
+use crate::algebra::abstract_::vector_space::linear_combination;
+
 use super::super::abstract_::{
-    Additive, Curve, DifferentiableCurve, Ring, VectorSpace, impl_additive_ops,
-    impl_vector_space_ops,
+    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
+    VectorSpace,
 };
 use super::linear::Linear;
 
@@ -10,6 +12,21 @@ pub struct Quadratic<T> {
     pub c2: T,
     pub c1: T,
     pub c0: T,
+}
+
+impl<T> Quadratic<T>
+where
+    T: VectorSpace + Clone,
+    T::Over: Ring,
+{
+    pub fn from_int_matrix<const N: usize>(mat: [[isize; N]; 3], pts: [T; N]) -> Self {
+        let [r0, r1, r2]: [[T::Over; N]; 3] = mat.map(|r| r.map(Ring::from_integer));
+        Quadratic {
+            c0: linear_combination(r0, pts.clone()),
+            c1: linear_combination(r1, pts.clone()),
+            c2: linear_combination(r2, pts),
+        }
+    }
 }
 
 impl<T: Additive> Additive for Quadratic<T> {
@@ -96,4 +113,12 @@ impl<T: Additive> From<Linear<T>> for Quadratic<T> {
             ..Self::zero()
         }
     }
+}
+
+pub fn bezier2<T>(p0: T, p1: T, p2: T) -> Quadratic<T>
+where
+    T: VectorSpace + Clone,
+    T::Over: Ring,
+{
+    Quadratic::from_int_matrix([[1, 0, 0], [-2, 2, 0], [1, -2, 1]], [p0, p1, p2])
 }

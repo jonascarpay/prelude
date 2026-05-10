@@ -40,6 +40,7 @@
           packages = [
             rust-env
             pkgs.cargo-show-asm
+            pkgs.bacon
           ];
         };
         packages = rec {
