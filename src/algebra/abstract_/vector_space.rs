@@ -81,15 +81,14 @@ macro_rules! impl_vector_space_ops {
     };
 }
 
-impl<R, T, const N: usize> VectorSpace for [T; N]
+impl<R, const N: usize> VectorSpace for [R; N]
 where
     R: Ring + Clone,
-    T: VectorSpace<Over = R>,
 {
     type Over = R;
 
     fn scale(self, c: Self::Over) -> Self {
-        self.map(|x| x.scale(c.clone()))
+        self.map(|x| x.mult(c.clone()))
     }
 }
 
