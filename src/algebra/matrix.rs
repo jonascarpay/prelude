@@ -1,7 +1,7 @@
 use std::ops::Mul;
 
 use crate::algebra::{
-    abstract_::{additive::iter_sum, Additive, Ring, VectorSpace},
+    abstract_::{additive::iter_sum, Additive, Ring},
     geometric::vec2::V2,
 };
 
@@ -39,32 +39,30 @@ fn generic_matmul<
     C: Additive,
     F: Fn(&A, &B) -> C,
     const ROW: usize,
-    const HIDDEN: usize,
+    const HID: usize,
     const COL: usize,
 >(
-    a: Matrix<A, ROW, HIDDEN>,
-    b: Matrix<B, HIDDEN, COL>,
+    a: Matrix<A, ROW, HID>,
+    b: Matrix<B, HID, COL>,
     f: F,
 ) -> Matrix<C, ROW, COL> {
     use std::array::from_fn;
     Matrix {
         arr: from_fn(|r| {
             from_fn(|c| {
-                let hs: [C; HIDDEN] = from_fn(|h| f(&a[r][h], &b[h][c]));
+                let hs: [C; HID] = from_fn(|h| f(&a[r][h], &b[h][c]));
                 iter_sum(hs.into_iter())
             })
         }),
     }
 }
 
-impl<V: VectorSpace + Clone, const R: usize, const H: usize, const C: usize> Mul<Matrix<V, H, C>>
-    for Matrix<V::Over, R, H>
-where
-    V::Over: Ring,
+// TODO a method/newtype for doing vector space `scale` instead of ring `mult`
+impl<T: Ring, const R: usize, const H: usize, const C: usize> Mul<Matrix<T, H, C>>
+    for Matrix<T, R, H>
 {
-    type Output = Matrix<V, R, C>;
-
-    fn mul(self, rhs: Matrix<V, H, C>) -> Self::Output {
-        matmul(self, rhs, |a, b| b.clone().scale(a.clone()))
+    type Output = Matrix<T, R, C>;
+    fn mul(self, rhs: Matrix<T, H, C>) -> Self::Output {
+        generic_matmul(self, rhs, |a, b| b.clone().mult(a.clone()))
     }
 }

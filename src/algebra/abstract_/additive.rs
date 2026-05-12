@@ -16,6 +16,12 @@ pub trait Additive: Sized {
     fn is_zero(&self) -> bool;
 }
 
+// TODO: investigate whether it makes sense to have
+//   plus_ref: &T -> &T -> T
+//   plus_mut: &mut T -> T -> ()
+//   plus_mut_ref: &mut T -> &T -> ()
+// with defaults that just clone/core::mem::replace
+
 #[inline]
 pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(mut iter: I) -> T {
     let mut res = T::zero();

@@ -1,6 +1,7 @@
 use super::additive::Additive;
 use super::ring::Ring;
 
+/// This is technically a _module_, since it's constrained to Ring instead of Field.
 pub trait VectorSpace: Additive
 where
     Self::Over: Ring,
