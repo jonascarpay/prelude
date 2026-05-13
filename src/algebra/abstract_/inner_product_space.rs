@@ -4,6 +4,7 @@ use crate::algebra::abstract_::{additive::iter_sum, Ring, VectorSpace};
 
 // The familiar dot product.
 // Should obey <u,v> = 1/2 (Q(u+v) - Q(v) - Q(v))
+// TODO relate this to ring mult multiplying magnitudes
 pub trait InnerProductSpace: VectorSpace {
     // a * b.conjugate() TODO always?
     fn quadrance(self) -> Self::Over;

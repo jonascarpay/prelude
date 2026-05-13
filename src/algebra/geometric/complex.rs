@@ -1,4 +1,4 @@
-use crate::impl_ring_ops;
+use crate::{algebra::abstract_::field::Field, impl_ring_ops};
 
 use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
@@ -12,7 +12,7 @@ pub struct Complex<T> {
     pub xy: T,
 }
 
-impl<T: Ring + Copy> Complex<T> {
+impl<T: Ring + Clone> Complex<T> {
     pub fn i() -> Self {
         Self::xy()
     }
@@ -65,12 +65,12 @@ impl<T: Additive> Additive for Complex<T> {
     }
 }
 
-impl<T: Ring + Copy> VectorSpace for Complex<T> {
+impl<T: Ring + Clone> VectorSpace for Complex<T> {
     type Over = T;
 
     fn scale(self, c: T) -> Self {
         Complex {
-            s: self.s.mult(c),
+            s: self.s.mult(c.clone()),
             xy: self.xy.mult(c),
         }
     }
@@ -104,7 +104,7 @@ impl<T: Ring> From<T> for Complex<T> {
     }
 }
 
-impl<T: Ring + Copy> Ring for Complex<T> {
+impl<T: Ring + Clone> Ring for Complex<T> {
     fn mult(self, rhs: Self) -> Self {
         // (a + bi) (c + di)
         // ac + adi + bci - bd
@@ -112,7 +112,7 @@ impl<T: Ring + Copy> Ring for Complex<T> {
         let Complex { s: a, xy: b } = self;
         let Complex { s: c, xy: d } = rhs;
         Complex {
-            s: a.mult(c).minus(b.mult(d)),
+            s: a.clone().mult(c.clone()).minus(b.clone().mult(d.clone())),
             xy: a.mult(d).plus(b.mult(c)),
         }
     }
@@ -128,6 +128,32 @@ impl<T: Ring + Copy> Ring for Complex<T> {
         Complex {
             s: T::from_integer(i),
             xy: T::zero(),
+        }
+    }
+}
+
+impl<T: Field> Field for Complex<T> {
+    fn recip(self) -> Self {
+        let Complex { s: a, xy: b } = self;
+        let q = a.clone().sq().plus(b.clone().sq());
+
+        Complex {
+            s: a.div(q.clone()),
+            xy: b.div(q).negate(),
+        }
+    }
+
+    fn div(self, rhs: Self) -> Self {
+        let Complex { s: a, xy: b } = self;
+        let Complex { s: c, xy: d } = rhs;
+        let q = c.clone().sq().plus(d.clone().sq());
+
+        Complex {
+            s: a.clone()
+                .mult(c.clone())
+                .plus(b.clone().mult(d.clone()))
+                .div(q.clone()),
+            xy: b.mult(c).minus(a.mult(d)).div(q),
         }
     }
 }
