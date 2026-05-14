@@ -13,6 +13,10 @@ pub trait Additive: Sized {
         self.plus(rhs.negate())
     }
 
+    // TODO think about whether we want to give this a default impl.
+    // If so, with what? Eq? PartialEq? Own equality trait?
+    // We don't rely on stdlib traits anywhere else, but there's nothing wrong with them, and
+    // they're derivable...
     fn is_zero(&self) -> bool;
 }
 
