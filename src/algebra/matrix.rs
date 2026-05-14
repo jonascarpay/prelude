@@ -57,7 +57,6 @@ fn generic_matmul<
     }
 }
 
-// TODO a method/newtype for doing vector space `scale` instead of ring `mult`
 impl<T: Ring, const R: usize, const H: usize, const C: usize> Mul<Matrix<T, H, C>>
     for Matrix<T, R, H>
 {
@@ -66,3 +65,7 @@ impl<T: Ring, const R: usize, const H: usize, const C: usize> Mul<Matrix<T, H, C
         generic_matmul(self, rhs, |a, b| b.clone().mult(a.clone()))
     }
 }
+
+// TODO a method/newtype for doing vector space `scale` instead of ring `mult`
+// TODO VectorSpace
+// TODO nxn Ring

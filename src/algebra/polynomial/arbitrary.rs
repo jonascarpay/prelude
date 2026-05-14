@@ -90,7 +90,7 @@ impl<T: Additive + Copy> Additive for Polynomial<T> {
 }
 
 impl<T: Ring + Copy + PartialEq> VectorSpace for Polynomial<T> {
-    type Over = T;
+    type Scalar = T;
     fn scale(self, c: T) -> Self {
         if c.is_zero() {
             Self::zero()

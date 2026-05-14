@@ -86,9 +86,9 @@ impl<T: Additive> Additive for V2<T> {
 }
 
 impl<T: Ring + Clone> VectorSpace for V2<T> {
-    type Over = T;
+    type Scalar = T;
 
-    fn scale(self, c: Self::Over) -> Self {
+    fn scale(self, c: Self::Scalar) -> Self {
         V2 {
             x: self.x.mult(c.clone()),
             y: self.y.mult(c),
@@ -97,11 +97,11 @@ impl<T: Ring + Clone> VectorSpace for V2<T> {
 }
 
 impl<T: Ring + Clone> InnerProductSpace for V2<T> {
-    fn quadrance(self) -> Self::Over {
+    fn quadrance(self) -> Self::Scalar {
         self.x.sq().plus(self.y.sq())
     }
 
-    fn inner(self, rhs: Self) -> Self::Over {
+    fn inner(self, rhs: Self) -> Self::Scalar {
         self.x.mult(rhs.x).plus(self.y.mult(rhs.y))
     }
 }

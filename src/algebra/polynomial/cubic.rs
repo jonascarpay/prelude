@@ -57,7 +57,7 @@ impl<T: Additive> Additive for Cubic<T> {
 }
 
 impl<T: Ring + Copy> VectorSpace for Cubic<T> {
-    type Over = T;
+    type Scalar = T;
     fn scale(self, c: T) -> Self {
         Cubic {
             c3: self.c3.mult(c),

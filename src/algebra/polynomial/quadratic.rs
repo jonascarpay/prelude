@@ -17,10 +17,10 @@ pub struct Quadratic<T> {
 impl<T> Quadratic<T>
 where
     T: VectorSpace + Clone,
-    T::Over: Ring,
+    T::Scalar: Ring,
 {
     pub fn from_int_matrix<const N: usize>(mat: [[isize; N]; 3], pts: [T; N]) -> Self {
-        let [r0, r1, r2]: [[T::Over; N]; 3] = mat.map(|r| r.map(Ring::from_integer));
+        let [r0, r1, r2]: [[T::Scalar; N]; 3] = mat.map(|r| r.map(Ring::from_integer));
         Quadratic {
             c0: linear_combination(r0, pts.clone()),
             c1: linear_combination(r1, pts.clone()),
@@ -68,7 +68,7 @@ impl<T: Additive> Additive for Quadratic<T> {
 }
 
 impl<T: Ring + Copy> VectorSpace for Quadratic<T> {
-    type Over = T;
+    type Scalar = T;
     fn scale(self, c: T) -> Self {
         Quadratic {
             c2: self.c2.mult(c),
@@ -118,7 +118,7 @@ impl<T: Additive> From<Linear<T>> for Quadratic<T> {
 pub fn bezier2<T>(p0: T, p1: T, p2: T) -> Quadratic<T>
 where
     T: VectorSpace + Clone,
-    T::Over: Ring,
+    T::Scalar: Ring,
 {
     Quadratic::from_int_matrix([[1, 0, 0], [-2, 2, 0], [1, -2, 1]], [p0, p1, p2])
 }

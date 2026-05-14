@@ -66,7 +66,7 @@ impl<T: Additive> Additive for Complex<T> {
 }
 
 impl<T: Ring + Clone> VectorSpace for Complex<T> {
-    type Over = T;
+    type Scalar = T;
 
     fn scale(self, c: T) -> Self {
         Complex {
@@ -77,7 +77,7 @@ impl<T: Ring + Clone> VectorSpace for Complex<T> {
 }
 
 impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
-    fn quadrance(self) -> Self::Over {
+    fn quadrance(self) -> Self::Scalar {
         // Q(a + bi)
         // (a + bi)(a - bi)
         // aa - abi + bia + bb
@@ -85,7 +85,7 @@ impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
         self.s.sq().plus(self.xy.sq())
     }
 
-    fn inner(self, rhs: Self) -> Self::Over {
+    fn inner(self, rhs: Self) -> Self::Scalar {
         // 1/2 (Q(u+v) - Q(u) - Q(v))
         // 1/2 (Q((a+c) + (b+d)i) - Q(a + ci) - Q(b + di))
         // 1/2 (aa + cc + 2ac + bb + dd + 2bd - aa - cc - bb - dd)

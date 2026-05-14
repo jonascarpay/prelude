@@ -45,7 +45,7 @@ impl<T: Additive> Additive for Linear<T> {
 }
 
 impl<T: Ring + Copy> VectorSpace for Linear<T> {
-    type Over = T;
+    type Scalar = T;
     fn scale(self, c: T) -> Self {
         Linear {
             c1: self.c1.mult(c),
