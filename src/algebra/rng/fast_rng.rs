@@ -1,16 +1,10 @@
 use crate::algebra::rng::split_rng::SplitRng;
 
 #[derive(Clone)]
-/// A xoshiro256++ RNG.
-/// Very fast, and pretty high-quality.
-/// Better performance and statistical properties than SplitRng, but no splitting.
-/// For the best of both worlds, draw `FastRng`'s from `SplitRng` using `SplitRng::next_rng`, which is
-/// also what `FastRng::new` does.
+/// Fast and high-quality RNG based on xoshiro256++.
 pub struct FastRng {
     // https://en.wikipedia.org/wiki/Xorshift#xoshiro256++
     // https://prng.di.unimi.it/xoshiro256plusplus.c
-    // Fast, decent-quality RNG.
-    // Better performance and randomness than splitmix, but no splitting.
     pub(crate) s0: u64,
     pub(crate) s1: u64,
     pub(crate) s2: u64,
@@ -38,8 +32,8 @@ impl FastRng {
         res
     }
 
-    // Equivalent to 2^128 calls to next_u64()
-    // Can be used to split the RNG, but not recursively, since `next_u64` and `jump` commute.
+    /// Equivalent to 2^128 calls to next_u64().
+    /// Can be used to as a quick way to get independent sequences, but not a true split.
     pub fn jump(&mut self) {
         let consts: [u64; 4] = [
             0x180ec6d33cfd0aba,
@@ -69,5 +63,52 @@ impl FastRng {
         self.s1 = s1;
         self.s2 = s2;
         self.s3 = s3;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const REF: FastRng = FastRng {
+        s0: 1,
+        s1: 2,
+        s2: 3,
+        s3: 4,
+    };
+
+    // Reference values from prng.di.unimi.it/xoshiro256plusplus.c
+    #[test]
+    fn matches_reference() {
+        let mut r = REF.clone();
+        assert_eq!(r.next_u64(), 0x0000000002800001);
+        assert_eq!(r.next_u64(), 0x0000000003800067);
+        assert_eq!(r.next_u64(), 0x000CC00003800067);
+        assert_eq!(r.next_u64(), 0x000CC201994400B2);
+    }
+
+    #[test]
+    fn jump_matches_reference() {
+        let mut r = REF.clone();
+        r.jump();
+        assert_eq!(r.s0, 0x8C7A153956B5F3D1);
+        assert_eq!(r.s1, 0x701F1A713401D85E);
+        assert_eq!(r.s2, 0x6527F66A65469085);
+        assert_eq!(r.s3, 0x8386B786C4408050);
+    }
+
+    #[test]
+    fn jump_next_commute() {
+        let r = FastRng::new(0);
+
+        let mut a = r.clone();
+        a.jump();
+        a.next_u64();
+
+        let mut b = r.clone();
+        b.next_u64();
+        b.jump();
+
+        assert_eq!(a.next_u64(), b.next_u64());
     }
 }
