@@ -1,14 +1,20 @@
-use crate::algebra::rng::split_rng::SplitRng;
+use crate::random::rng::split::SplitRng;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 /// Fast and high-quality RNG based on xoshiro256++.
 pub struct FastRng {
     // https://en.wikipedia.org/wiki/Xorshift#xoshiro256++
     // https://prng.di.unimi.it/xoshiro256plusplus.c
-    pub(crate) s0: u64,
-    pub(crate) s1: u64,
-    pub(crate) s2: u64,
-    pub(crate) s3: u64,
+    pub(super) s0: u64,
+    pub(super) s1: u64,
+    pub(super) s2: u64,
+    pub(super) s3: u64,
+}
+
+impl Default for FastRng {
+    fn default() -> Self {
+        FastRng::new(9)
+    }
 }
 
 impl FastRng {

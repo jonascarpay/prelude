@@ -1,6 +1,6 @@
-use crate::algebra::rng::fast_rng::FastRng;
+use crate::random::rng::fast::FastRng;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 /// A splittable RNG, based on SplitMix64.
 /// A hair slower and less random than FastRng, but supports splitting.
 /// For the best of both worlds, use `SplitRng` as a seed to generate `FastRng`s using `SplitRng::next_rng`, which is also what `FastRng::new` does.
