@@ -2,16 +2,18 @@
 
 Working title.
 
+Don't use this library in any way.
+
 This is (will be) a collection of the things I wish Rust had, or had better defaults for, designed to be
 - pragmatic (make me more productive)
 - simple (only things that are immediately self-explanatory (to me))
 - fast (by being optimizer-friendly)
-- coherent (a small set of traits and types, large payoff)
+- coherent (a small, internally consistent set of traits and types)
 - self-contained (only depends on `std`)
 
 ## Contents
 
-Everything is WIP, nothing is finished.
+Everything is incomplete and WIP, nothing is finished.
 I'll be moving in more (mostly gamedev related/inspired) stuff as I go.
 Currently contains:
 
