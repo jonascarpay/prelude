@@ -4,31 +4,18 @@ use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub struct V2<T> {
     pub x: T,
     pub y: T,
 }
 
-impl<T: Ring> V2<T> {
-    pub fn x() -> Self {
-        V2 {
-            x: T::one(),
-            y: T::zero(),
-        }
-    }
-    pub fn y() -> Self {
-        V2 {
-            x: T::zero(),
-            y: T::one(),
-        }
-    }
-    pub fn basis() -> [Self; 2] {
-        [Self::x(), Self::y()]
-    }
+pub const fn v2<T>(x: T, y: T) -> V2<T> {
+    V2 { x, y }
 }
 
 impl<T> V2<T> {
-    pub fn new(x: T, y: T) -> V2<T> {
+    pub const fn new(x: T, y: T) -> V2<T> {
         V2 { x, y }
     }
     pub fn xunit() -> Self
@@ -45,9 +32,15 @@ impl<T> V2<T> {
         T: Ring,
     {
         V2 {
-            y: T::zero(),
-            x: T::one(),
+            x: T::zero(),
+            y: T::one(),
         }
+    }
+    pub fn basis() -> [Self; 2]
+    where
+        T: Ring,
+    {
+        [Self::xunit(), Self::yunit()]
     }
 }
 
