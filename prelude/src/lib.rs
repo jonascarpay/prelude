@@ -1,2 +1,2 @@
 pub mod algebra;
-pub mod random;
+pub mod rng;

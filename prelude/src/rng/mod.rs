@@ -20,7 +20,7 @@ impl Rng for split::SplitRng {
 #[cfg(test)]
 mod tests {
 
-    use crate::random::rng::{fast::FastRng, split::SplitRng, Rng};
+    use crate::rng::{fast::FastRng, split::SplitRng, Rng};
 
     #[test]
     fn fast_doesnt_spin() {

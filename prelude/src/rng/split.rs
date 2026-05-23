@@ -1,4 +1,4 @@
-use crate::random::rng::fast::FastRng;
+use crate::rng::fast::FastRng;
 
 #[derive(Clone, Debug)]
 /// A splittable RNG, based on SplitMix64.

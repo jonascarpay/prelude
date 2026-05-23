@@ -1,4 +1,4 @@
-use crate::random::rng::split::SplitRng;
+use crate::rng::split::SplitRng;
 
 #[derive(Clone, Debug)]
 /// Fast and high-quality RNG based on xoshiro256++.
