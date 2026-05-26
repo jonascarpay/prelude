@@ -27,13 +27,13 @@ pub trait Additive: Sized {
 // with defaults that just clone/core::mem::replace
 
 #[inline]
-pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(mut iter: I) -> T {
+pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
     let mut res = T::zero();
     // It's tempting to unroll the first iteration, so that it starts accumulating from the first element instead of from zero.
     // Unfortunately, that's actually _less_ optimizer friendly, even though it 0.0 + a !=== a.
     // Only this version vectorizes correctly.
-    while let Some(c) = iter.next() {
-        res = res.plus(c);
+    for c in iter {
+        res = res.plus(c)
     }
     res
 }
