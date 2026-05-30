@@ -14,4 +14,7 @@ pub use {
     vector_space::VectorSpace,
 };
 
-pub use crate::{impl_additive_ops, impl_ring_ops, impl_vector_space_ops};
+pub use crate::{
+    impl_additive_ops, impl_ring_ops, impl_vector_space_div, impl_vector_space_mul,
+    impl_vector_space_ops,
+};

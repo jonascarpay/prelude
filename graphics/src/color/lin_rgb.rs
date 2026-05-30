@@ -1,6 +1,6 @@
 use crate::color::unorm8::Unorm8;
 use prelude::algebra::abstract_::{Additive, Ring, VectorSpace};
-use prelude::impl_additive_ops;
+use prelude::{impl_additive_ops, impl_vector_space_mul};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LinRgb {
@@ -68,7 +68,7 @@ impl VectorSpace for LinRgb {
 }
 
 impl_additive_ops!([] LinRgb);
-// impl_vector_space_ops omitted — see TODO on the macro. Use `LinRgb::scale` directly.
+impl_vector_space_mul!([] LinRgb);
 
 #[cfg(test)]
 mod tests {
@@ -103,17 +103,17 @@ mod tests {
 
         #[test]
         fn scale_identity(a: LinRgb) {
-            prop_assert_eq!(a.scale(Unorm8::ONE), a);
+            prop_assert_eq!(a * Unorm8::ONE, a);
         }
 
         #[test]
         fn scale_zero(a: LinRgb) {
-            prop_assert_eq!(a.scale(Unorm8::ZERO), LinRgb::BLACK);
+            prop_assert_eq!(a * Unorm8::ZERO, LinRgb::BLACK);
         }
 
         #[test]
         fn scale_componentwise(a: LinRgb, c: Unorm8) {
-            let scaled = a.scale(c);
+            let scaled = a * c;
             prop_assert_eq!(scaled.r, a.r * c);
             prop_assert_eq!(scaled.g, a.g * c);
             prop_assert_eq!(scaled.b, a.b * c);

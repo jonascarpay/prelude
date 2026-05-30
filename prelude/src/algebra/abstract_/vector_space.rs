@@ -58,27 +58,15 @@ where
 
     fn scale(self, s: Self::Scalar) -> Self {
         let (a, b, c, d) = self;
-        (
-            a.scale(s.clone()),
-            b.scale(s.clone()),
-            c.scale(s.clone()),
-            d.scale(s),
-        )
+        (a.scale(s.clone()), b.scale(s.clone()), c.scale(s.clone()), d.scale(s))
     }
 }
 
-/// Emit `Mul<Self::Scalar>` and `Div<Self::Scalar>` impls that forward to
-/// `VectorSpace::scale`. The `Div` impl is only callable when `Self::Scalar: Field`.
+/// Emit `Mul<Self::Scalar>` impl that forwards to `VectorSpace::scale`.
 ///
-/// Usage: `impl_vector_space_ops!([T: Ring + Copy] V2<T>);`
-///
-/// TODO: split into separate `impl_vector_space_mul` and `impl_vector_space_div`
-/// macros. The combined form fails for concrete non-Field scalars (e.g. `Unorm8`),
-/// because rustc evaluates the unconditional `where Scalar: Field` bound on the
-/// `Div` impl and rejects it. With generic scalars the bound is conditional and
-/// compiles fine.
+/// Usage: `impl_vector_space_mul!([T: Ring + Copy] V2<T>);`
 #[macro_export]
-macro_rules! impl_vector_space_ops {
+macro_rules! impl_vector_space_mul {
     ([$($g:tt)*] $t:ty) => {
         impl<$($g)*> ::core::ops::Mul<<Self as $crate::algebra::abstract_::VectorSpace>::Scalar> for $t {
             type Output = Self;
@@ -86,7 +74,17 @@ macro_rules! impl_vector_space_ops {
                 <Self as $crate::algebra::abstract_::VectorSpace>::scale(self, c)
             }
         }
+    };
+}
 
+/// Emit `Div<Self::Scalar>` impl that forwards to `VectorSpace::scale` via `Field::recip`.
+/// Requires `Self::Scalar: Field` — only call this when the scalar is generic enough
+/// to be a Field, or when you know it concretely implements Field.
+///
+/// Usage: `impl_vector_space_div!([T: Field + Copy] V2<T>);`
+#[macro_export]
+macro_rules! impl_vector_space_div {
+    ([$($g:tt)*] $t:ty) => {
         impl<$($g)*> ::core::ops::Div<<Self as $crate::algebra::abstract_::VectorSpace>::Scalar> for $t
         where
             <Self as $crate::algebra::abstract_::VectorSpace>::Scalar:
@@ -103,6 +101,21 @@ macro_rules! impl_vector_space_ops {
     };
 }
 
+/// Emit both `Mul<Self::Scalar>` and `Div<Self::Scalar>` impls. The `Div` impl is
+/// only callable when `Self::Scalar: Field`, so this form requires a scalar that
+/// is generic over Field or known concretely to implement Field — use
+/// `impl_vector_space_mul!` alone if your scalar is not a Field (e.g. `Unorm8`).
+///
+/// Usage: `impl_vector_space_ops!([T: Ring + Copy] V2<T>);`
+/// TODO: probably just drop this and have implementors invoke both macros manually
+#[macro_export]
+macro_rules! impl_vector_space_ops {
+    ([$($g:tt)*] $t:ty) => {
+        $crate::impl_vector_space_mul!([$($g)*] $t);
+        $crate::impl_vector_space_div!([$($g)*] $t);
+    };
+}
+
 impl<R, const N: usize> VectorSpace for [R; N]
 where
     R: Ring + Clone,
@@ -114,10 +127,7 @@ where
     }
 }
 
-pub fn linear_combination<T: VectorSpace, const N: usize>(
-    weights: [T::Scalar; N],
-    vecs: [T; N],
-) -> T {
+pub fn linear_combination<T: VectorSpace, const N: usize>(weights: [T::Scalar; N], vecs: [T; N]) -> T {
     use std::iter::zip;
     zip(weights, vecs).fold(T::zero(), |s, (c, a)| s.plus(a.scale(c)))
 }
