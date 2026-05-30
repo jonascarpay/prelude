@@ -63,11 +63,14 @@ impl<T: Ring + Copy> VectorSpace for Quadratic<T> {
 impl_additive_ops!([T: Additive] Quadratic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Quadratic<T>);
 
-impl<T: Ring + Copy> Curve for Quadratic<T> {
-    type Domain = T;
+impl<T: VectorSpace> Curve for Quadratic<T> {
+    type Domain = T::Scalar;
     type Codomain = T;
-    fn evaluate(self, x: T) -> T {
-        self.c2.mult(x.squared()).plus(self.c1).mult(x).plus(self.c0)
+    fn evaluate(self, x: T::Scalar) -> T {
+        self.c0
+            .scale(x.clone())
+            .plus(self.c1.scale(x.clone()))
+            .plus(self.c2.scale(x.clone().squared()))
     }
 }
 

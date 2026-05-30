@@ -1,3 +1,5 @@
+use crate::algebra::polynomial::spline::Spline;
+
 use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
 };
@@ -70,18 +72,15 @@ impl<T: Ring + Copy> VectorSpace for Cubic<T> {
 impl_additive_ops!([T: Additive] Cubic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Cubic<T>);
 
-impl<T: Ring + Copy> Curve for Cubic<T> {
-    type Domain = T;
+impl<T: VectorSpace> Curve for Cubic<T> {
+    type Domain = T::Scalar;
     type Codomain = T;
-    // This seems wrong
-    fn evaluate(self, x: T) -> T {
+    fn evaluate(self, x: T::Scalar) -> T {
         self.c0
-            .mult(x.cubed())
-            .plus(self.c1)
-            .mult(x.squared())
-            .plus(self.c2)
-            .mult(x)
-            .plus(self.c3)
+            .scale(x.clone())
+            .plus(self.c1.scale(x.clone()))
+            .plus(self.c2.scale(x.clone().squared()))
+            .plus(self.c3.scale(x.cubed()))
     }
 }
 
@@ -123,6 +122,7 @@ impl<T: Additive> From<Quadratic<T>> for Cubic<T> {
     }
 }
 
+/// A cubic Bezier polynomial, given a start point, two control points, and an end point.
 pub fn bezier3<T>(p0: T, p1: T, p2: T, p3: T) -> Cubic<T>
 where
     T: VectorSpace + Clone,
@@ -132,6 +132,57 @@ where
         c0: p0.clone(),
         c1: p0.iscaled(-3).plus(p1.iscaled(3)),
         c2: p0.iscaled(3).plus(p1.iscaled(-6)).plus(p2.iscaled(3)),
-        c3: p0.negate().plus(p1.iscale(3)).plus(p2.iscale(-2).plus(p3)),
+        c3: p0.negate().plus(p1.iscale(3)).plus(p2.iscale(-3).plus(p3)),
+    }
+}
+
+/// A C1-continuous Bezier spline, i.e. continuous velocity.
+/// Parameters are
+///   - the start point
+///   - the start point's outward tangent control point
+///   - a list of (inward tangent control point, knot) pairs.
+pub fn bezier_spline_c1<const N: usize, T: VectorSpace>(
+    p_start: T,
+    p_start_out: T,
+    controls: [(T, T); N],
+) -> Spline<N, Cubic<T>> {
+    let mut p_prev = p_start.clone();
+    let mut p_prev_out = p_start_out.clone();
+
+    Spline {
+        curves: controls.map(|(p_in, p)| {
+            let c = bezier3(p_prev.clone(), p_start_out.clone(), p_in.clone(), p.clone());
+            p_prev = p.clone();
+            let d = p.clone().minus(p_in);
+            p_prev_out = p.plus(d);
+            c
+        }),
+    }
+}
+
+// TODO bezier_spline_g1 (tangent-continuous), takes a list [(T, T, T::Scalar)]
+
+/// A C0-continuous Bezier spline, i.e. continuous position.
+/// Parameters are
+///   - the start point
+///   - the start point's outward tangent control point
+///   - a list of (inward tangent control point, knot, outward tangent control point) pairs.
+///
+/// For the last knot, the outward tangent control point is ignored.
+pub fn bezier_spline_c0<const N: usize, T: VectorSpace>(
+    p_start: T,
+    p_start_out: T,
+    controls: [(T, T, T); N],
+) -> Spline<N, Cubic<T>> {
+    let mut p_prev = p_start.clone();
+    let mut p_prev_out = p_start_out.clone();
+
+    Spline {
+        curves: controls.map(|(p_in, p, p_out)| {
+            let c = bezier3(p_prev.clone(), p_start_out.clone(), p_in.clone(), p.clone());
+            p_prev = p;
+            p_prev_out = p_out;
+            c
+        }),
     }
 }
