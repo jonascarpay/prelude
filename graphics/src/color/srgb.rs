@@ -1,5 +1,6 @@
+use prelude::algebra::numeric::unorm8::Unorm8;
+
 use crate::color::lin_rgb::LinRgb;
-use crate::color::unorm8::Unorm8;
 
 /// 8-bit gamma-2.2-encoded sRGB. No alpha.
 ///

@@ -1,7 +1,11 @@
 use crate::color::lin_rgb::LinRgb;
-use crate::color::unorm8::Unorm8;
-use prelude::algebra::abstract_::{Additive, Ring, VectorSpace};
-use prelude::{impl_additive_ops, impl_vector_space_mul};
+use prelude::{
+    algebra::{
+        abstract_::{Additive, Ring, VectorSpace},
+        numeric::unorm8::Unorm8,
+    },
+    impl_additive_ops, impl_vector_space_mul,
+};
 
 /// 8-bit linear RGBA.
 ///

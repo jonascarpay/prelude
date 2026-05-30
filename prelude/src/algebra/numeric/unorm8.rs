@@ -1,10 +1,12 @@
-use prelude::algebra::abstract_::{Additive, Ring};
-use prelude::{impl_additive_ops, impl_ring_ops};
+use crate::algebra::abstract_::{Additive, Ring};
+use crate::{impl_additive_ops, impl_ring_ops};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// A real on the [0,1] interval with 8 bits of precision.
+/// Addition saturates.
+pub struct Unorm8(pub u8);
 // TODO make generic over T using FixedBase
 // TODO move to prelude, generally useful not just for color
-pub struct Unorm8(pub u8);
 
 impl Unorm8 {
     pub const ZERO: Unorm8 = Unorm8(0u8);

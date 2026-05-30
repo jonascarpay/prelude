@@ -1,6 +1,10 @@
-use crate::color::unorm8::Unorm8;
-use prelude::algebra::abstract_::{Additive, Ring, VectorSpace};
-use prelude::{impl_additive_ops, impl_vector_space_mul};
+use prelude::{
+    algebra::{
+        abstract_::{Additive, Ring, VectorSpace},
+        numeric::unorm8::Unorm8,
+    },
+    impl_additive_ops, impl_vector_space_mul,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LinRgb {
