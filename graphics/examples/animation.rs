@@ -26,7 +26,7 @@ impl<D> App<D> {
     }
 }
 
-impl<'win, D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
+impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         let window = event_loop.create_window(Window::default_attributes()).unwrap();
         let window = Rc::new(window);
