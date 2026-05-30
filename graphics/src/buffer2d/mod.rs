@@ -90,6 +90,18 @@ impl<T: BufferMut> Buffer2DView<T> {
         }
     }
 
+    pub fn generate<F>(&mut self, mut f: F)
+    where
+        F: FnMut(Index2D) -> T::Elem,
+    {
+        for y in 0..self.size.y {
+            let row = self.row_mut(y);
+            for x in 0..row.len() {
+                row[x] = f(v2(x, y));
+            }
+        }
+    }
+
     pub fn blit<S>(&mut self, src: &Buffer2DView<S>, at: Index2D) -> Option<()>
     where
         S: Buffer<Elem = T::Elem>,
