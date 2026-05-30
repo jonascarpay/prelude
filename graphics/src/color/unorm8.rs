@@ -18,6 +18,7 @@ impl Unorm8 {
         let xy = self.0 as u16 * rhs.0 as u16;
         Unorm8(((xy + 127) / 255) as u8)
     }
+    // TODO: from ratio(nal)
 }
 
 /// Saturating addition.

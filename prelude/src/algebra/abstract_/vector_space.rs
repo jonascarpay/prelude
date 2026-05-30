@@ -71,6 +71,12 @@ where
 /// `VectorSpace::scale`. The `Div` impl is only callable when `Self::Scalar: Field`.
 ///
 /// Usage: `impl_vector_space_ops!([T: Ring + Copy] V2<T>);`
+///
+/// TODO: split into separate `impl_vector_space_mul` and `impl_vector_space_div`
+/// macros. The combined form fails for concrete non-Field scalars (e.g. `Unorm8`),
+/// because rustc evaluates the unconditional `where Scalar: Field` bound on the
+/// `Div` impl and rejects it. With generic scalars the bound is conditional and
+/// compiles fine.
 #[macro_export]
 macro_rules! impl_vector_space_ops {
     ([$($g:tt)*] $t:ty) => {
