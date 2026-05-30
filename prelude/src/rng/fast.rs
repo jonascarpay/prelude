@@ -22,11 +22,7 @@ impl FastRng {
         SplitRng::new(seed).next_rng()
     }
     pub const fn next_u64(&mut self) -> u64 {
-        let res = self
-            .s0
-            .wrapping_add(self.s3)
-            .rotate_left(23)
-            .wrapping_add(self.s0);
+        let res = self.s0.wrapping_add(self.s3).rotate_left(23).wrapping_add(self.s0);
         let t = self.s1 << 17;
         self.s2 ^= self.s0;
         self.s3 ^= self.s1;
