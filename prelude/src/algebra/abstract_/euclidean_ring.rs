@@ -16,15 +16,19 @@ pub trait EuclideanRing: Ring + Sized {
 macro_rules! impl_euclidean_ring {
     ($t:ty) => {
         impl EuclideanRing for $t {
+            #[inline]
             fn div_euclid(self, rhs: Self) -> Self {
                 <$t>::div_euclid(self, rhs)
             }
+            #[inline]
             fn rem_euclid(self, rhs: Self) -> Self {
                 <$t>::rem_euclid(self, rhs)
             }
+            #[inline]
             fn checked_div_euclid(self, rhs: Self) -> Option<Self> {
                 <$t>::checked_div_euclid(self, rhs)
             }
+            #[inline]
             fn checked_rem_euclid(self, rhs: Self) -> Option<Self> {
                 <$t>::checked_rem_euclid(self, rhs)
             }
