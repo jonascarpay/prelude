@@ -7,3 +7,6 @@ edition = "2024"
 prelude = { path = "../prelude" }
 softbuffer = "0.4.8"
 winit = "0.30.13"
+
+[dev-dependencies]
+proptest = "1"
