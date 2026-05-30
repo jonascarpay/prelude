@@ -2,7 +2,7 @@ use super::additive::Additive;
 use super::ring::Ring;
 
 /// This is technically a _module_, since it's constrained to Ring instead of Field.
-pub trait VectorSpace: Additive
+pub trait VectorSpace: Additive + Clone
 where
     Self::Scalar: Ring,
 {
@@ -14,6 +14,16 @@ where
     ///   - v.plus(u).scale(a) = v.scale(a).plus(u.scale(a))
     ///   - v.scale(a.plus(b)) = v.scale(a).plus(v.scale(b))
     fn scale(self, c: Self::Scalar) -> Self;
+
+    fn scaled(&self, c: Self::Scalar) -> Self {
+        self.clone().scale(c)
+    }
+    fn iscale(self, c: isize) -> Self {
+        self.scale(Self::Scalar::from_integer(c))
+    }
+    fn iscaled(&self, c: isize) -> Self {
+        self.clone().iscale(c)
+    }
     // TODO specify left or right module? Or what side we scale on?
 }
 
@@ -125,9 +135,4 @@ where
     fn scale(self, c: Self::Scalar) -> Self {
         self.map(|x| x.mult(c.clone()))
     }
-}
-
-pub fn linear_combination<T: VectorSpace, const N: usize>(weights: [T::Scalar; N], vecs: [T; N]) -> T {
-    use std::iter::zip;
-    zip(weights, vecs).fold(T::zero(), |s, (c, a)| s.plus(a.scale(c)))
 }

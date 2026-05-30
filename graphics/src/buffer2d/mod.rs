@@ -90,6 +90,7 @@ impl<T: BufferMut> Buffer2DView<T> {
         }
     }
 
+    #[allow(clippy::needless_range_loop)]
     pub fn generate<F>(&mut self, mut f: F)
     where
         F: FnMut(Index2D) -> T::Elem,

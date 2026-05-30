@@ -4,15 +4,24 @@ pub trait Ring: Additive + Sized + Clone {
     /// An associative operation, distributive w.r.t. `plus`
     fn mult(self, rhs: Self) -> Self;
 
+    /// Integer homomorphism
+    fn from_integer(i: isize) -> Self;
+
     /// Identity element for `mult` such that `zero() != one()`
     fn one() -> Self {
         Self::from_integer(1)
     }
 
-    fn from_integer(i: isize) -> Self;
-
-    fn sq(self) -> Self {
+    fn squared(self) -> Self {
         self.clone().mult(self)
+    }
+
+    fn cubed(self) -> Self {
+        self.clone().mult(self.clone()).mult(self.clone())
+    }
+
+    fn imult(self, rhs: isize) -> Self {
+        self.mult(Self::from_integer(rhs))
     }
 }
 

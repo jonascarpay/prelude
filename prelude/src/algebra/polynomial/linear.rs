@@ -59,7 +59,7 @@ impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
 
 impl<T: Ring + Copy> Curve for Linear<T> {
     type Domain = T;
-    type Range = T;
+    type Codomain = T;
     fn evaluate(self, x: T) -> T {
         self.c1.mult(x).plus(self.c0)
     }

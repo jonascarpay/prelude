@@ -133,7 +133,7 @@ impl_ring_ops!([T: Ring + Copy] Polynomial<T>);
 
 impl<T: Ring + Copy> Curve for Polynomial<T> {
     type Domain = T;
-    type Range = T;
+    type Codomain = T;
     fn evaluate(self, x: T) -> T {
         let mut res = T::zero();
         let mut term = T::one();

@@ -1,5 +1,5 @@
 /// An additive group
-pub trait Additive: Sized {
+pub trait Additive: Sized + Clone {
     /// An associative, commutative operation
     fn plus(self, rhs: Self) -> Self;
 
@@ -18,6 +18,10 @@ pub trait Additive: Sized {
     // We don't rely on stdlib traits anywhere else, but there's nothing wrong with them, and
     // they're derivable...
     fn is_zero(&self) -> bool;
+
+    fn negated(self) -> Self {
+        self.clone().negate()
+    }
 }
 
 // TODO: investigate whether it makes sense to have

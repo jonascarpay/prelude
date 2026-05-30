@@ -82,7 +82,7 @@ impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
         // (a + bi)(a - bi)
         // aa - abi + bia + bb
         // aa + bb
-        self.s.sq().plus(self.xy.sq())
+        self.s.squared().plus(self.xy.squared())
     }
 
     fn inner(self, rhs: Self) -> Self::Scalar {
@@ -135,7 +135,7 @@ impl<T: Ring + Clone> Ring for Complex<T> {
 impl<T: Field> Field for Complex<T> {
     fn recip(self) -> Self {
         let Complex { s: a, xy: b } = self;
-        let q = a.clone().sq().plus(b.clone().sq());
+        let q = a.clone().squared().plus(b.clone().squared());
 
         Complex {
             s: a.div(q.clone()),
@@ -146,13 +146,10 @@ impl<T: Field> Field for Complex<T> {
     fn div(self, rhs: Self) -> Self {
         let Complex { s: a, xy: b } = self;
         let Complex { s: c, xy: d } = rhs;
-        let q = c.clone().sq().plus(d.clone().sq());
+        let q = c.clone().squared().plus(d.clone().squared());
 
         Complex {
-            s: a.clone()
-                .mult(c.clone())
-                .plus(b.clone().mult(d.clone()))
-                .div(q.clone()),
+            s: a.clone().mult(c.clone()).plus(b.clone().mult(d.clone())).div(q.clone()),
             xy: b.mult(c).minus(a.mult(d)).div(q),
         }
     }

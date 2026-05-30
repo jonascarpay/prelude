@@ -1,8 +1,6 @@
 use crate::algebra::{abstract_::InnerProductSpace, geometric::complex::Complex};
 
-use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
-};
+use super::super::abstract_::{impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace};
 
 #[derive(Debug, Clone, Copy)]
 pub struct V2<T> {
@@ -91,7 +89,7 @@ impl<T: Ring + Clone> VectorSpace for V2<T> {
 
 impl<T: Ring + Clone> InnerProductSpace for V2<T> {
     fn quadrance(self) -> Self::Scalar {
-        self.x.sq().plus(self.y.sq())
+        self.x.squared().plus(self.y.squared())
     }
 
     fn inner(self, rhs: Self) -> Self::Scalar {

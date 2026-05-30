@@ -2,6 +2,7 @@ use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub struct V3<T> {
     pub x: T,
     pub y: T,
@@ -93,20 +94,12 @@ impl<T: Ring + Clone> VectorSpace for V3<T> {
 impl<T: Ring + Clone> InnerProductSpace for V3<T> {
     fn quadrance(self) -> Self::Scalar {
         let V3 { x, y, z } = self;
-        x.sq().plus(y.sq()).plus(z.sq())
+        x.squared().plus(y.squared()).plus(z.squared())
     }
 
     fn inner(self, rhs: Self) -> Self::Scalar {
-        let V3 {
-            x: x0,
-            y: y0,
-            z: z0,
-        } = self;
-        let V3 {
-            x: x1,
-            y: y1,
-            z: z1,
-        } = rhs;
+        let V3 { x: x0, y: y0, z: z0 } = self;
+        let V3 { x: x1, y: y1, z: z1 } = rhs;
         x0.mult(x1).plus(y0.mult(y1)).plus(z0.mult(z1))
     }
 }

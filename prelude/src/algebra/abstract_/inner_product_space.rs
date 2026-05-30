@@ -14,7 +14,7 @@ pub trait InnerProductSpace: VectorSpace {
 
 impl<T: Ring, const N: usize> InnerProductSpace for [T; N] {
     fn quadrance(self) -> Self::Scalar {
-        iter_sum(self.into_iter().map(Ring::sq))
+        iter_sum(self.into_iter().map(Ring::squared))
     }
 
     fn inner(self, rhs: Self) -> Self::Scalar {
