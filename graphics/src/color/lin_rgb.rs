@@ -55,9 +55,6 @@ impl Additive for LinRgb {
             b: self.b.negate(),
         }
     }
-    fn is_zero(&self) -> bool {
-        self.r.is_zero() && self.g.is_zero() && self.b.is_zero()
-    }
 }
 
 impl VectorSpace for LinRgb {

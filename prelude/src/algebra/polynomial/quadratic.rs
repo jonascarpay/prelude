@@ -4,7 +4,7 @@ use super::super::abstract_::{
 use super::linear::Linear;
 
 /// A degree 2 univariate polynomial, i.e. of the form `c2 * x^2 + c1 * x + c0`
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Quadratic<T> {
     pub c0: T,
     pub c1: T,
@@ -42,10 +42,6 @@ impl<T: Additive> Additive for Quadratic<T> {
             c1: self.c1.negate(),
             c2: self.c2.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.c0.is_zero() && self.c1.is_zero() && self.c2.is_zero()
     }
 }
 

@@ -1,10 +1,9 @@
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
-    VectorSpace,
+    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
 };
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Linear<T> {
     pub c1: T,
     pub c0: T,
@@ -37,10 +36,6 @@ impl<T: Additive> Additive for Linear<T> {
             c1: self.c1.negate(),
             c0: self.c0.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.c0.is_zero() && self.c1.is_zero()
     }
 }
 

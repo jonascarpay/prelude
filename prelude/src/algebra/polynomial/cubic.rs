@@ -7,7 +7,7 @@ use super::linear::Linear;
 use super::quadratic::Quadratic;
 
 /// A degree 3 univariate polynomial, i.e. of the form `c3 * x^3 + c2 * x^2 + c1 * x + c0`
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Cubic<T> {
     pub c0: T,
     pub c1: T,
@@ -50,10 +50,6 @@ impl<T: Additive> Additive for Cubic<T> {
             c2: self.c2.negate(),
             c3: self.c3.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.c0.is_zero() && self.c1.is_zero() && self.c2.is_zero() && self.c3.is_zero()
     }
 }
 

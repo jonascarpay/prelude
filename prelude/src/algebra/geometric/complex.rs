@@ -4,7 +4,7 @@ use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// A complex number of the form a + bi.
 /// We tie it into the geometric algebra by interpreting it as the even subalgebra of Cl(2,0,0)
 pub struct Complex<T> {
@@ -58,10 +58,6 @@ impl<T: Additive> Additive for Complex<T> {
             s: self.s.negate(),
             xy: self.xy.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.s.is_zero() && self.xy.is_zero()
     }
 }
 

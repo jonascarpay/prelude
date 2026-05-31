@@ -2,7 +2,8 @@ use crate::algebra::{abstract_::InnerProductSpace, geometric::complex::Complex};
 
 use super::super::abstract_::{impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// TODO Rename to Vec2
 pub struct V2<T> {
     pub x: T,
     pub y: T,
@@ -69,10 +70,6 @@ impl<T: Additive> Additive for V2<T> {
             x: self.x.negate(),
             y: self.y.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.x.is_zero() && self.y.is_zero()
     }
 }
 

@@ -23,6 +23,15 @@ pub trait Ring: Additive + Sized + Clone {
     fn imult(self, rhs: isize) -> Self {
         self.mult(Self::from_integer(rhs))
     }
+
+    fn succ(self) -> Self {
+        self.plus(Self::one())
+    }
+
+    // TODO implement in macros
+    fn incr(&mut self) {
+        *self = self.clone().succ();
+    }
 }
 
 impl<A, B> Ring for (A, B)

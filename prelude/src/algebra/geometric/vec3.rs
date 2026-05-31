@@ -2,7 +2,7 @@ use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct V3<T> {
     pub x: T,
     pub y: T,
@@ -73,10 +73,6 @@ impl<T: Additive> Additive for V3<T> {
             y: self.y.negate(),
             z: self.z.negate(),
         }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.x.is_zero() && self.y.is_zero() && self.z.is_zero()
     }
 }
 

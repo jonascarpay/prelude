@@ -128,9 +128,6 @@ impl Additive for LinRgba {
             a: self.a.negate(),
         }
     }
-    fn is_zero(&self) -> bool {
-        self.r.is_zero() && self.g.is_zero() && self.b.is_zero() && self.a.is_zero()
-    }
 }
 
 impl VectorSpace for LinRgba {

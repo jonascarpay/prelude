@@ -1,9 +1,7 @@
 use std::ops::{Shl, Shr};
 
 use crate::{
-    algebra::abstract_::{
-        euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace,
-    },
+    algebra::abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
     impl_additive_ops, impl_ring_ops, impl_vector_space_ops,
 };
 
@@ -71,13 +69,7 @@ impl<T: Additive, const FRAC_BITS: u32> Additive for Fixed<T, FRAC_BITS> {
     }
 
     fn negate(self) -> Self {
-        Fixed {
-            raw: self.raw.negate(),
-        }
-    }
-
-    fn is_zero(&self) -> bool {
-        self.raw.is_zero()
+        Fixed { raw: self.raw.negate() }
     }
 
     fn minus(self, rhs: Self) -> Self {
@@ -90,9 +82,7 @@ impl<T: Additive, const FRAC_BITS: u32> Additive for Fixed<T, FRAC_BITS> {
 impl<T: Ring, const FRAC_BITS: u32> VectorSpace for Fixed<T, FRAC_BITS> {
     type Scalar = T;
     fn scale(self, c: T) -> Self {
-        Fixed {
-            raw: self.raw.mult(c),
-        }
+        Fixed { raw: self.raw.mult(c) }
     }
 }
 
@@ -180,6 +170,7 @@ impl_vector_space_ops!([T: Ring, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::algebra::abstract_::additive::EqAdditive;
     use proptest::prelude::*;
 
     type I = Fixed<i16, 8>;

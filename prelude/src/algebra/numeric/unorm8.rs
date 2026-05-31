@@ -92,9 +92,6 @@ impl Additive for Unorm8 {
     fn negate(self) -> Self {
         Unorm8(0u8.saturating_sub(self.0))
     }
-    fn is_zero(&self) -> bool {
-        self.0 == 0
-    }
 }
 
 /// Fast rounding multiplication
