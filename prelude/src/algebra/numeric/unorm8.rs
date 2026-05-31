@@ -122,9 +122,9 @@ impl Ring for Unorm8 {
 impl_additive_ops!([] Unorm8);
 impl_ring_ops!([] Unorm8);
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[cfg(any(test, feature = "proptest"))]
+mod proptest_impls {
+    use super::Unorm8;
     use proptest::prelude::*;
 
     impl Arbitrary for Unorm8 {
@@ -134,6 +134,12 @@ mod tests {
             any::<u8>().prop_map(Unorm8).boxed()
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
 
     proptest! {
         #[test]

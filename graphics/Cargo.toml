@@ -9,4 +9,5 @@ softbuffer = "0.4.8"
 winit = "0.30.13"
 
 [dev-dependencies]
+prelude = { path = "../prelude", features = ["proptest"] }
 proptest = "1"
