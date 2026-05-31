@@ -1,5 +1,7 @@
 use std::{num::NonZeroU32, rc::Rc};
 
+use graphics::buffer2d::Buffer2DView;
+use prelude::algebra::geometric::vec2::v2;
 use softbuffer as sb;
 use winit::{
     event_loop::{ActiveEventLoop, EventLoop},
@@ -54,6 +56,8 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
             RedrawRequested => {
                 let sctx = self.surface_context.as_mut().expect("Redraw without surface context");
                 let mut buf = sctx.surface.buffer_mut().unwrap();
+                let mut view = Buffer2DView::from_softbuffer(&mut buf);
+                *view.get_mut(v2(10, 20)) = 0xFFFFFFFF;
                 buf.present().expect("Error presenting buffer");
             }
             _ => {
