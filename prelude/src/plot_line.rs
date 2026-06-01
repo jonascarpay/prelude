@@ -42,6 +42,13 @@ pub fn plot_line<T: Ring + Ord + Copy>(start: V2<T>, end: V2<T>) -> EndsAt<Ray2D
     EndsAt::new(Ray2D::new(start, end), end)
 }
 
+pub fn plot_open_line<T: Ring + Ord + Copy>(
+    start: V2<T>,
+    end: V2<T>,
+) -> EndsBefore<Ray2D<T>> {
+    EndsBefore::new(Ray2D::new(start, end), end)
+}
+
 pub struct Ray2D<T> {
     pos: V2<T>,
     s: V2<T>,
@@ -141,6 +148,43 @@ where
             self.done = true;
         }
         Some(item)
+    }
+}
+
+pub struct EndsBefore<I: Iterator> {
+    iter: I,
+    end: I::Item,
+    done: bool,
+}
+
+impl<I: Iterator> EndsBefore<I> {
+    pub fn new(iter: I, end: I::Item) -> Self {
+        Self {
+            iter,
+            end,
+            done: false,
+        }
+    }
+}
+
+impl<I> Iterator for EndsBefore<I>
+where
+    I: Iterator,
+    I::Item: PartialEq,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<I::Item> {
+        if self.done {
+            return None;
+        }
+        let item = self.iter.next()?;
+        if item == self.end {
+            self.done = true;
+            None
+        } else {
+            Some(item)
+        }
     }
 }
 
