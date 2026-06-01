@@ -41,6 +41,19 @@ impl<T> V2<T> {
     {
         [Self::xunit(), Self::yunit()]
     }
+    // TODO functor??
+    pub fn map<Out, F: FnMut(T) -> Out>(self, mut f: F) -> V2<Out> {
+        V2 {
+            x: f(self.x),
+            y: f(self.y),
+        }
+    }
+    pub fn map_into<Out: From<T>>(self) -> V2<Out> {
+        V2 {
+            x: self.x.into(),
+            y: self.y.into(),
+        }
+    }
 }
 
 impl<T: Additive> Additive for V2<T> {

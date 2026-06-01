@@ -1,7 +1,7 @@
 use crate::{
     algebra::{
-        abstract_::{additive::iter_sum, Additive, Ring},
-        v2, V2,
+        abstract_::{additive::iter_sum, Ring},
+        V2,
     },
     plot::{
         itertools::{StopsAt, StopsBefore},
@@ -9,41 +9,7 @@ use crate::{
     },
 };
 
-#[inline(never)]
-pub fn bresenham_sum_reference(start: V2<usize>, end: V2<usize>) -> V2<usize> {
-    let mut x = start.x as isize;
-    let mut y = start.y as isize;
-    let x1 = end.x as isize;
-    let y1 = end.y as isize;
-    let dx = (x1 - x).abs();
-    let dy = -(y1 - y).abs();
-    let sx = if x < x1 { 1 } else { -1 };
-    let sy = if y < y1 { 1 } else { -1 };
-    let mut err = dx + dy;
-    let mut out = V2::zero();
-    loop {
-        out.incr_by(v2(x as usize, y as usize));
-        if x == x1 && y == y1 {
-            break;
-        }
-        let e2 = 2 * err;
-        if e2 >= dy {
-            err += dy;
-            x += sx;
-        }
-        if e2 <= dx {
-            err += dx;
-            y += sy;
-        }
-    }
-    out
-}
-
-#[inline(never)]
-pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
-    iter_sum(plot_line2d(start, end))
-}
-
+/// Checked to be as optimizer-friendly as a hand-rolled implementation.
 pub fn plot_line2d<T: Ring + Ord + Copy>(start: V2<T>, end: V2<T>) -> StopsAt<Ray2D<T>> {
     StopsAt::new(plot_ray2d(start, end), end)
 }
@@ -52,8 +18,15 @@ pub fn plot_open_line2d<T: Ring + Ord + Copy>(start: V2<T>, end: V2<T>) -> Stops
     StopsBefore::new(plot_ray2d(start, end), end)
 }
 
+#[inline(never)]
+pub fn reference(start: V2<usize>, end: V2<usize>) -> V2<usize> {
+    iter_sum(plot_line2d(start, end))
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::algebra::v2;
+
     use super::*;
     use proptest::prelude::*;
 
