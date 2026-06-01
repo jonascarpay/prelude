@@ -35,7 +35,11 @@ pub fn bresenham_sum_reference(start: V2<usize>, end: V2<usize>) -> V2<usize> {
 
 #[inline(never)]
 pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
-    iter_sum(PlotLine2D::new(start, end))
+    iter_sum(plot_line(start, end))
+}
+
+pub fn plot_line<T: Ring + Ord + Copy>(start: V2<T>, end: V2<T>) -> EndsAt<Ray2D<T>> {
+    EndsAt::new(Ray2D::new(start, end), end)
 }
 
 pub struct Ray2D<T> {
@@ -105,34 +109,38 @@ impl<T: Ring + Ord + Copy> Iterator for Ray2D<T> {
     }
 }
 
-pub struct PlotLine2D<T> {
-    ray: Ray2D<T>,
-    end: V2<T>,
+pub struct EndsAt<I: Iterator> {
+    iter: I,
+    end: I::Item,
     done: bool,
 }
 
-impl<T: Ring + Ord + Copy> PlotLine2D<T> {
-    pub fn new(start: V2<T>, end: V2<T>) -> Self {
+impl<I: Iterator> EndsAt<I> {
+    pub fn new(iter: I, end: I::Item) -> Self {
         Self {
-            ray: Ray2D::new(start, end),
+            iter,
             end,
             done: false,
         }
     }
 }
 
-impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
-    type Item = V2<T>;
+impl<I> Iterator for EndsAt<I>
+where
+    I: Iterator,
+    I::Item: PartialEq + Copy,
+{
+    type Item = I::Item;
 
-    fn next(&mut self) -> Option<V2<T>> {
+    fn next(&mut self) -> Option<I::Item> {
         if self.done {
             return None;
         }
-        let p = self.ray.next().unwrap();
-        if p == self.end {
+        let item = self.iter.next()?;
+        if item == self.end {
             self.done = true;
         }
-        Some(p)
+        Some(item)
     }
 }
 
@@ -152,19 +160,19 @@ mod tests {
     proptest! {
         #[test]
         fn first_is_start(start in vec(), end in vec()) {
-            let first = PlotLine2D::new(start, end).next();
+            let first = plot_line(start, end).next();
             prop_assert_eq!(first, Some(start));
         }
 
         #[test]
         fn last_is_end(start in vec(), end in vec()) {
-            let last = PlotLine2D::new(start, end).last();
+            let last = plot_line(start, end).last();
             prop_assert_eq!(last, Some(end));
         }
 
         #[test]
         fn length_matches_max_delta(start in vec(), end in vec()) {
-            let count = PlotLine2D::new(start, end).count();
+            let count = plot_line(start, end).count();
             let dx = abs_diff(end.x, start.x);
             let dy = abs_diff(end.y, start.y);
             prop_assert_eq!(count, dx.max(dy) + 1);
@@ -172,7 +180,7 @@ mod tests {
 
         #[test]
         fn no_gaps(start in vec(), end in vec()) {
-            let points: Vec<_> = PlotLine2D::new(start, end).collect();
+            let points: Vec<_> = plot_line(start, end).collect();
             for w in points.windows(2) {
                 let dx = abs_diff(w[1].x, w[0].x);
                 let dy = abs_diff(w[1].y, w[0].y);
