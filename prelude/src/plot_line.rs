@@ -102,3 +102,46 @@ impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
         Some(self.pos)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn vec() -> impl Strategy<Value = V2<isize>> {
+        (0isize..256, 0isize..256).prop_map(|(x, y)| v2(x, y))
+    }
+
+    proptest! {
+        #[test]
+        fn first_is_start(start in vec(), end in vec()) {
+            let first = PlotLine2D::new(start, end).next();
+            prop_assert_eq!(first, Some(start));
+        }
+
+        #[test]
+        fn last_is_end(start in vec(), end in vec()) {
+            let last = PlotLine2D::new(start, end).last();
+            prop_assert_eq!(last, Some(end));
+        }
+
+        #[test]
+        fn length_matches_max_delta(start in vec(), end in vec()) {
+            let count = PlotLine2D::new(start, end).count();
+            let dx = (end.x - start.x).abs();
+            let dy = (end.y - start.y).abs();
+            prop_assert_eq!(count, dx.max(dy) as usize + 1);
+        }
+
+        #[test]
+        fn no_gaps(start in vec(), end in vec()) {
+            let points: Vec<_> = PlotLine2D::new(start, end).collect();
+            for w in points.windows(2) {
+                let dx = (w[1].x - w[0].x).abs();
+                let dy = (w[1].y - w[0].y).abs();
+                prop_assert!(dx <= 1 && dy <= 1, "step too large: {:?} -> {:?}", w[0], w[1]);
+                prop_assert!(dx + dy > 0, "duplicate point: {:?}", w[0]);
+            }
+        }
+    }
+}
