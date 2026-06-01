@@ -38,9 +38,8 @@ pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
     iter_sum(PlotLine2D::new(start, end))
 }
 
-pub struct PlotLine2D<T> {
+pub struct Ray2D<T> {
     pos: V2<T>,
-    end: V2<T>,
     s: V2<T>,
     err: T,
     threshold: T,
@@ -49,18 +48,18 @@ pub struct PlotLine2D<T> {
     started: bool,
 }
 
-impl<T: Ring + Ord + Copy> PlotLine2D<T> {
-    pub fn new(start: V2<T>, end: V2<T>) -> Self {
+impl<T: Ring + Ord + Copy> Ray2D<T> {
+    pub fn new(start: V2<T>, through: V2<T>) -> Self {
         let one = T::one();
-        let (dx, sx) = if start.x < end.x {
-            (end.x.minus(start.x), one)
+        let (dx, sx) = if start.x < through.x {
+            (through.x.minus(start.x), one)
         } else {
-            (start.x.minus(end.x), one.negate())
+            (start.x.minus(through.x), one.negate())
         };
-        let (dy, sy) = if start.y < end.y {
-            (end.y.minus(start.y), one)
+        let (dy, sy) = if start.y < through.y {
+            (through.y.minus(start.y), one)
         } else {
-            (start.y.minus(end.y), one.negate())
+            (start.y.minus(through.y), one.negate())
         };
         let x_major = dx >= dy;
         let (major, minor) = if x_major { (dx, dy) } else { (dy, dx) };
@@ -68,7 +67,6 @@ impl<T: Ring + Ord + Copy> PlotLine2D<T> {
         let step = minor.plus(minor);
         Self {
             pos: start,
-            end,
             s: v2(sx, sy),
             err: major,
             threshold,
@@ -79,14 +77,11 @@ impl<T: Ring + Ord + Copy> PlotLine2D<T> {
     }
 }
 
-impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
+impl<T: Ring + Ord + Copy> Iterator for Ray2D<T> {
     type Item = V2<T>;
 
     fn next(&mut self) -> Option<V2<T>> {
         if self.started {
-            if self.pos == self.end {
-                return None;
-            }
             self.err = self.err.plus(self.step);
             let minor_step = self.err >= self.threshold;
             if minor_step {
@@ -107,6 +102,37 @@ impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
             self.started = true;
         }
         Some(self.pos)
+    }
+}
+
+pub struct PlotLine2D<T> {
+    ray: Ray2D<T>,
+    end: V2<T>,
+    done: bool,
+}
+
+impl<T: Ring + Ord + Copy> PlotLine2D<T> {
+    pub fn new(start: V2<T>, end: V2<T>) -> Self {
+        Self {
+            ray: Ray2D::new(start, end),
+            end,
+            done: false,
+        }
+    }
+}
+
+impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
+    type Item = V2<T>;
+
+    fn next(&mut self) -> Option<V2<T>> {
+        if self.done {
+            return None;
+        }
+        let p = self.ray.next().unwrap();
+        if p == self.end {
+            self.done = true;
+        }
+        Some(p)
     }
 }
 
