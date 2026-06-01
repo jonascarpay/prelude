@@ -1,5 +1,5 @@
 use crate::algebra::{
-    abstract_::{additive::iter_sum, Additive},
+    abstract_::{additive::iter_sum, Additive, Ring},
     v2, V2,
 };
 
@@ -35,33 +35,47 @@ pub fn bresenham_sum_reference(start: V2<usize>, end: V2<usize>) -> V2<usize> {
 
 #[inline(never)]
 pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
-    iter_sum(PlotLine2D::new(start, end))
+    let start = v2(start.x as isize, start.y as isize);
+    let end = v2(end.x as isize, end.y as isize);
+    let sum: V2<isize> = iter_sum(PlotLine2D::new(start, end));
+    v2(sum.x as usize, sum.y as usize)
 }
 
-pub struct PlotLine2D {
-    x: isize,
-    y: isize,
-    x1: isize,
-    y1: isize,
-    dx: isize,
-    dy: isize,
-    sx: isize,
-    sy: isize,
-    err: isize,
+pub struct PlotLine2D<T> {
+    x: T,
+    y: T,
+    x1: T,
+    y1: T,
+    dx: T,
+    dy: T,
+    sx: T,
+    sy: T,
+    err: T,
     started: bool,
 }
 
-impl PlotLine2D {
-    pub fn new(start: V2<usize>, end: V2<usize>) -> Self {
-        let x = start.x as isize;
-        let y = start.y as isize;
-        let x1 = end.x as isize;
-        let y1 = end.y as isize;
-        let dx = (x1 - x).abs();
-        let dy = -(y1 - y).abs();
-        let sx = if x < x1 { 1 } else { -1 };
-        let sy = if y < y1 { 1 } else { -1 };
-        let err = dx + dy;
+impl<T: Ring + Ord + Copy> PlotLine2D<T> {
+    pub fn new(start: V2<T>, end: V2<T>) -> Self {
+        let x = start.x;
+        let y = start.y;
+        let x1 = end.x;
+        let y1 = end.y;
+        let one = T::one();
+        let dx_signed = x1.minus(x);
+        let dy_signed = y1.minus(y);
+        let dx = if dx_signed < T::zero() {
+            dx_signed.negate()
+        } else {
+            dx_signed
+        };
+        let dy = if dy_signed < T::zero() {
+            dy_signed
+        } else {
+            dy_signed.negate()
+        };
+        let sx = if x < x1 { one } else { one.negate() };
+        let sy = if y < y1 { one } else { one.negate() };
+        let err = dx.plus(dy);
         Self {
             x,
             y,
@@ -77,26 +91,26 @@ impl PlotLine2D {
     }
 }
 
-impl Iterator for PlotLine2D {
-    type Item = V2<usize>;
+impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
+    type Item = V2<T>;
 
-    fn next(&mut self) -> Option<V2<usize>> {
+    fn next(&mut self) -> Option<V2<T>> {
         if self.started {
             if self.x == self.x1 && self.y == self.y1 {
                 return None;
             }
-            let e2 = 2 * self.err;
+            let e2 = self.err.plus(self.err);
             if e2 >= self.dy {
-                self.err += self.dy;
-                self.x += self.sx;
+                self.err = self.err.plus(self.dy);
+                self.x = self.x.plus(self.sx);
             }
             if e2 <= self.dx {
-                self.err += self.dx;
-                self.y += self.sy;
+                self.err = self.err.plus(self.dx);
+                self.y = self.y.plus(self.sy);
             }
         } else {
             self.started = true;
         }
-        Some(v2(self.x as usize, self.y as usize))
+        Some(v2(self.x, self.y))
     }
 }
