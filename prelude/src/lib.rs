@@ -1,3 +1,3 @@
 pub mod algebra;
-pub mod plot_line;
+pub mod plot;
 pub mod rng;
