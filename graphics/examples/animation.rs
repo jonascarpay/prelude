@@ -3,10 +3,7 @@ use std::{num::NonZeroU32, rc::Rc};
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
     algebra::geometric::vec2::v2,
-    plot::{
-        line::plot_line2d,
-        ray::{plot_ray2d, Ray2D},
-    },
+    plot::ray::{plot_ray2d, Ray2D},
 };
 use softbuffer as sb;
 use winit::{
@@ -63,22 +60,16 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let sctx = self.surface_context.as_mut().expect("Redraw without surface context");
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
-                let mut ray: Ray2D<isize> = plot_ray2d(v2(100, 100), v2(300, 500));
+                let mut ray: Ray2D<usize> = plot_ray2d(v2(100, 100), v2(100, 100));
                 for _ in 0..10000 {
                     let p = ray.step();
-                    dbg!(p);
                     *view.get_mut(p.map(|i| i as usize)) = 0xFFFFFFFF;
-                    if p.x <= 0 && ray.delta().x < 0 {
-                        ray.reflect_y();
+                    let n = ray.peek();
+                    if n.x >= 1820 {
+                        ray.reflect_in_y();
                     }
-                    if p.x >= 1819 && ray.delta().x > 0 {
-                        ray.reflect_y();
-                    }
-                    if p.y <= 0 && ray.delta().y < 0 {
-                        ray.reflect_x();
-                    }
-                    if p.y >= 1000 && ray.delta().y > 0 {
-                        ray.reflect_x();
+                    if n.y >= 2080 {
+                        ray.reflect_in_x();
                     }
                 }
                 buf.present().expect("Error presenting buffer");

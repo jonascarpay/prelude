@@ -52,6 +52,11 @@ mod tests {
         }
 
         #[test]
+        fn open_does_not_contain_end(start in vec(), end in vec()) {
+            prop_assert!(plot_open_line2d(start, end).last() != Some(end));
+        }
+
+        #[test]
         fn length_matches_max_delta(start in vec(), end in vec()) {
             let count = plot_line2d(start, end).count();
             let dx = abs_diff(end.x, start.x);

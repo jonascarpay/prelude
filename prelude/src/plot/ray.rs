@@ -47,58 +47,48 @@ impl<T: Ring + Ord + Copy> Ray2D<T> {
         self.s = self.s.negate();
     }
 
-    pub fn reflect_x(&mut self) {
+    pub fn reflect_in_x(&mut self) {
         self.s.y = self.s.y.negate();
     }
 
-    pub fn reflect_y(&mut self) {
+    pub fn reflect_in_y(&mut self) {
         self.s.x = self.s.x.negate();
     }
-    pub fn delta(self) -> V2<T> {
+    pub fn delta(&self) -> V2<T> {
         self.s
     }
-    pub fn peek(&self) -> V2<T> {
+
+    #[must_use]
+    pub fn unfold(mut self) -> (V2<T>, Self) {
         if !self.started {
-            return self.pos;
+            self.started = true;
+            return (self.pos, self);
         }
-        let new_err = self.err.plus(self.step);
-        let minor_step = new_err >= self.threshold;
-        let mut pos = self.pos;
+        self.err = self.err.plus(self.step);
+        let minor_step = self.err >= self.threshold;
+        if minor_step {
+            self.err = self.err.minus(self.threshold);
+        }
         if self.x_major {
-            pos.x = pos.x.plus(self.s.x);
+            self.pos.x = self.pos.x.plus(self.s.x);
             if minor_step {
-                pos.y = pos.y.plus(self.s.y);
+                self.pos.y = self.pos.y.plus(self.s.y);
             }
         } else {
-            pos.y = pos.y.plus(self.s.y);
+            self.pos.y = self.pos.y.plus(self.s.y);
             if minor_step {
-                pos.x = pos.x.plus(self.s.x);
+                self.pos.x = self.pos.x.plus(self.s.x);
             }
         }
-        pos
+        (self.pos, self)
+    }
+    pub fn peek(&self) -> V2<T> {
+        (*self).unfold().0
     }
     pub fn step(&mut self) -> V2<T> {
-        if self.started {
-            self.err = self.err.plus(self.step);
-            let minor_step = self.err >= self.threshold;
-            if minor_step {
-                self.err = self.err.minus(self.threshold);
-            }
-            if self.x_major {
-                self.pos.x = self.pos.x.plus(self.s.x);
-                if minor_step {
-                    self.pos.y = self.pos.y.plus(self.s.y);
-                }
-            } else {
-                self.pos.y = self.pos.y.plus(self.s.y);
-                if minor_step {
-                    self.pos.x = self.pos.x.plus(self.s.x);
-                }
-            }
-        } else {
-            self.started = true;
-        }
-        self.pos
+        let (pos, new_self) = (*self).unfold();
+        *self = new_self;
+        pos
     }
 }
 
