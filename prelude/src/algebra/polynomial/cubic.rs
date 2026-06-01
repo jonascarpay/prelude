@@ -73,7 +73,6 @@ impl<T: VectorSpace> Curve for Cubic<T> {
     type Codomain = T;
     fn evaluate(self, x: T::Scalar) -> T {
         self.c0
-            .scale(x.clone())
             .plus(self.c1.scale(x.clone()))
             .plus(self.c2.scale(x.clone().squared()))
             .plus(self.c3.scale(x.cubed()))

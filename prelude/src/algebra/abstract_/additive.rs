@@ -53,14 +53,8 @@ impl<T: Ord + Additive> OrderedAdditive for T {}
 
 #[inline]
 pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
-    let mut res = T::zero();
-    // It's tempting to unroll the first iteration, so that it starts accumulating from the first element instead of from zero.
-    // Unfortunately, that's actually _less_ optimizer friendly, even though it 0.0 + a !=== a.
-    // Only this version vectorizes correctly.
-    for c in iter {
-        res = res.plus(c)
-    }
-    res
+    // TODO asm peep
+    iter.fold(T::zero(), T::plus)
 }
 
 impl Additive for () {

@@ -6,31 +6,37 @@ use prelude::{
     impl_additive_ops, impl_vector_space_mul,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LinRgb {
-    pub r: Unorm8,
-    pub g: Unorm8,
-    pub b: Unorm8,
+pub fn rgb<T>(r: T, g: T, b: T) -> LinRgb<T> {
+    LinRgb::new(r, g, b)
 }
 
-impl LinRgb {
-    pub const BLACK: Self = Self {
-        r: Unorm8::ZERO,
-        g: Unorm8::ZERO,
-        b: Unorm8::ZERO,
-    };
-    pub const WHITE: Self = Self {
-        r: Unorm8::ONE,
-        g: Unorm8::ONE,
-        b: Unorm8::ONE,
-    };
+/// Linear RGB, generic over the per-channel pixel type `T`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LinRgb<T> {
+    pub r: T,
+    pub g: T,
+    pub b: T,
+}
 
-    pub const fn new(r: Unorm8, g: Unorm8, b: Unorm8) -> Self {
+/// 8-bit linear RGB — the storage/compositing representation.
+pub type LinRgb8 = LinRgb<Unorm8>;
+
+impl<T> LinRgb<T> {
+    pub const fn new(r: T, g: T, b: T) -> Self {
         Self { r, g, b }
     }
 }
 
-impl Additive for LinRgb {
+impl<T: Ring> LinRgb<T> {
+    pub fn white() -> Self {
+        rgb(T::one(), T::one(), T::one())
+    }
+    pub fn black() -> Self {
+        rgb(T::zero(), T::zero(), T::zero())
+    }
+}
+
+impl<T: Additive> Additive for LinRgb<T> {
     fn plus(self, rhs: Self) -> Self {
         Self {
             r: self.r.plus(rhs.r),
@@ -46,7 +52,11 @@ impl Additive for LinRgb {
         }
     }
     fn zero() -> Self {
-        Self::BLACK
+        Self {
+            r: T::zero(),
+            g: T::zero(),
+            b: T::zero(),
+        }
     }
     fn negate(self) -> Self {
         Self {
@@ -57,63 +67,64 @@ impl Additive for LinRgb {
     }
 }
 
-impl VectorSpace for LinRgb {
-    type Scalar = Unorm8;
-    fn scale(self, c: Unorm8) -> Self {
+impl<T: Ring> VectorSpace for LinRgb<T> {
+    type Scalar = T;
+    fn scale(self, c: T) -> Self {
         Self {
-            r: self.r.mult(c),
-            g: self.g.mult(c),
+            r: self.r.mult(c.clone()),
+            g: self.g.mult(c.clone()),
             b: self.b.mult(c),
         }
     }
 }
 
-impl_additive_ops!([] LinRgb);
-impl_vector_space_mul!([] LinRgb);
+impl_additive_ops!([T: Additive] LinRgb<T>);
+impl_vector_space_mul!([T: Ring] LinRgb<T>);
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use proptest::prelude::*;
 
-    impl Arbitrary for LinRgb {
+    impl<T: Arbitrary + 'static> Arbitrary for LinRgb<T> {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
         fn arbitrary_with(_: ()) -> Self::Strategy {
-            (any::<Unorm8>(), any::<Unorm8>(), any::<Unorm8>())
+            (any::<T>(), any::<T>(), any::<T>())
                 .prop_map(|(r, g, b)| LinRgb { r, g, b })
                 .boxed()
         }
     }
 
     proptest! {
+        // Explicitly testing LinRgb8 here
         #[test]
-        fn plus_commutative(a: LinRgb, b: LinRgb) {
+        fn plus_commutative(a: LinRgb8, b: LinRgb8) {
             prop_assert_eq!(a + b, b + a);
         }
 
         #[test]
-        fn plus_associative(a: LinRgb, b: LinRgb, c: LinRgb) {
+        fn plus_associative(a: LinRgb8, b: LinRgb8, c: LinRgb8) {
             prop_assert_eq!((a + b) + c, a + (b + c));
         }
 
         #[test]
-        fn plus_identity(a: LinRgb) {
-            prop_assert_eq!(a + LinRgb::BLACK, a);
+        fn plus_identity(a: LinRgb8) {
+            prop_assert_eq!(a + LinRgb::black(), a);
         }
 
         #[test]
-        fn scale_identity(a: LinRgb) {
+        fn scale_identity(a: LinRgb8) {
             prop_assert_eq!(a * Unorm8::ONE, a);
         }
 
         #[test]
-        fn scale_zero(a: LinRgb) {
-            prop_assert_eq!(a * Unorm8::ZERO, LinRgb::BLACK);
+        fn scale_zero(a: LinRgb8) {
+            prop_assert_eq!(a * Unorm8::ZERO, LinRgb::zero());
         }
 
         #[test]
-        fn scale_componentwise(a: LinRgb, c: Unorm8) {
+        fn scale_componentwise(a: LinRgb8, c: Unorm8) {
             let scaled = a * c;
             prop_assert_eq!(scaled.r, a.r * c);
             prop_assert_eq!(scaled.g, a.g * c);

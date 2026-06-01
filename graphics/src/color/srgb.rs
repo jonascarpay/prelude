@@ -1,6 +1,6 @@
 use prelude::algebra::numeric::unorm8::Unorm8;
 
-use crate::color::lin_rgb::LinRgb;
+use crate::color::lin_rgb::LinRgb8;
 
 /// 8-bit gamma-2.2-encoded sRGB. No alpha.
 ///
@@ -29,8 +29,8 @@ impl Srgb {
     }
 }
 
-impl From<LinRgb> for Srgb {
-    fn from(c: LinRgb) -> Self {
+impl From<LinRgb8> for Srgb {
+    fn from(c: LinRgb8) -> Self {
         Self {
             r: c.r.to_gamma(),
             g: c.g.to_gamma(),
@@ -42,10 +42,11 @@ impl From<LinRgb> for Srgb {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use prelude::algebra::abstract_::Additive;
 
     #[test]
     fn black_white() {
-        assert_eq!(Srgb::from(LinRgb::BLACK), Srgb::BLACK);
-        assert_eq!(Srgb::from(LinRgb::WHITE), Srgb::WHITE);
+        assert_eq!(Srgb::from(LinRgb8::zero()), Srgb::BLACK);
+        assert_eq!(Srgb::from(LinRgb8::white()), Srgb::WHITE);
     }
 }

@@ -1,4 +1,4 @@
-use crate::color::lin_rgb::LinRgb;
+use crate::color::lin_rgb::LinRgb8;
 use prelude::{
     algebra::{
         abstract_::{Additive, Ring, VectorSpace},
@@ -71,7 +71,7 @@ impl LinRgba {
     }
 
     /// Opaque (alpha = ONE) — premult invariant trivially holds.
-    pub const fn from_rgb(rgb: LinRgb) -> Self {
+    pub const fn from_rgb(rgb: LinRgb8) -> Self {
         Self {
             r: rgb.r,
             g: rgb.g,
@@ -81,7 +81,7 @@ impl LinRgba {
     }
 
     /// Premultiplies `rgb` by `alpha`.
-    pub fn from_rgb_transparent(rgb: LinRgb, alpha: Unorm8) -> Self {
+    pub fn from_rgb_transparent(rgb: LinRgb8, alpha: Unorm8) -> Self {
         Self {
             r: rgb.r.mult(alpha),
             g: rgb.g.mult(alpha),
@@ -142,8 +142,8 @@ impl VectorSpace for LinRgba {
     }
 }
 
-impl From<LinRgb> for LinRgba {
-    fn from(c: LinRgb) -> Self {
+impl From<LinRgb8> for LinRgba {
+    fn from(c: LinRgb8) -> Self {
         Self::from_rgb(c)
     }
 }
@@ -160,7 +160,7 @@ mod tests {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
         fn arbitrary_with(_: ()) -> Self::Strategy {
-            (any::<LinRgb>(), any::<Unorm8>())
+            (any::<LinRgb8>(), any::<Unorm8>())
                 .prop_map(|(rgb, alpha)| LinRgba::from_rgb_transparent(rgb, alpha))
                 .boxed()
         }
@@ -193,7 +193,7 @@ mod tests {
         }
 
         #[test]
-        fn from_rgb_transparent_premultiplied(rgb: LinRgb, alpha: Unorm8) {
+        fn from_rgb_transparent_premultiplied(rgb: LinRgb8, alpha: Unorm8) {
             prop_assert!(LinRgba::from_rgb_transparent(rgb, alpha).valid_premult());
         }
 
@@ -221,7 +221,7 @@ mod tests {
         }
 
         #[test]
-        fn over_opaque_foreground(rgb: LinRgb, dst: LinRgba) {
+        fn over_opaque_foreground(rgb: LinRgb8, dst: LinRgba) {
             let fg: LinRgba = rgb.into();
             prop_assert_eq!(fg.over(dst), fg);
         }
