@@ -35,45 +35,45 @@ pub fn bresenham_sum_reference(start: V2<usize>, end: V2<usize>) -> V2<usize> {
 
 #[inline(never)]
 pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
-    let start = v2(start.x as isize, start.y as isize);
-    let end = v2(end.x as isize, end.y as isize);
-    let sum: V2<isize> = iter_sum(PlotLine2D::new(start, end));
-    v2(sum.x as usize, sum.y as usize)
+    iter_sum(PlotLine2D::new(start, end))
 }
 
 pub struct PlotLine2D<T> {
     pos: V2<T>,
     end: V2<T>,
-    d: V2<T>,
     s: V2<T>,
     err: T,
+    threshold: T,
+    step: T,
+    x_major: bool,
     started: bool,
 }
 
 impl<T: Ring + Ord + Copy> PlotLine2D<T> {
     pub fn new(start: V2<T>, end: V2<T>) -> Self {
         let one = T::one();
-        let dx_signed = end.x.minus(start.x);
-        let dy_signed = end.y.minus(start.y);
-        let dx = if dx_signed < T::zero() {
-            dx_signed.negate()
+        let (dx, sx) = if start.x < end.x {
+            (end.x.minus(start.x), one)
         } else {
-            dx_signed
+            (start.x.minus(end.x), one.negate())
         };
-        let dy = if dy_signed < T::zero() {
-            dy_signed
+        let (dy, sy) = if start.y < end.y {
+            (end.y.minus(start.y), one)
         } else {
-            dy_signed.negate()
+            (start.y.minus(end.y), one.negate())
         };
-        let sx = if start.x < end.x { one } else { one.negate() };
-        let sy = if start.y < end.y { one } else { one.negate() };
-        let err = dx.plus(dy);
+        let x_major = dx >= dy;
+        let (major, minor) = if x_major { (dx, dy) } else { (dy, dx) };
+        let threshold = major.plus(major);
+        let step = minor.plus(minor);
         Self {
             pos: start,
             end,
-            d: v2(dx, dy),
             s: v2(sx, sy),
-            err,
+            err: major,
+            threshold,
+            step,
+            x_major,
             started: false,
         }
     }
@@ -87,14 +87,21 @@ impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
             if self.pos == self.end {
                 return None;
             }
-            let e2 = self.err.plus(self.err);
-            if e2 >= self.d.y {
-                self.err = self.err.plus(self.d.y);
-                self.pos.x = self.pos.x.plus(self.s.x);
+            self.err = self.err.plus(self.step);
+            let minor_step = self.err >= self.threshold;
+            if minor_step {
+                self.err = self.err.minus(self.threshold);
             }
-            if e2 <= self.d.x {
-                self.err = self.err.plus(self.d.x);
+            if self.x_major {
+                self.pos.x = self.pos.x.plus(self.s.x);
+                if minor_step {
+                    self.pos.y = self.pos.y.plus(self.s.y);
+                }
+            } else {
                 self.pos.y = self.pos.y.plus(self.s.y);
+                if minor_step {
+                    self.pos.x = self.pos.x.plus(self.s.x);
+                }
             }
         } else {
             self.started = true;
@@ -108,8 +115,12 @@ mod tests {
     use super::*;
     use proptest::prelude::*;
 
-    fn vec() -> impl Strategy<Value = V2<isize>> {
-        (0isize..256, 0isize..256).prop_map(|(x, y)| v2(x, y))
+    fn vec() -> impl Strategy<Value = V2<usize>> {
+        (0usize..256, 0usize..256).prop_map(|(x, y)| v2(x, y))
+    }
+
+    fn abs_diff(a: usize, b: usize) -> usize {
+        a.max(b) - a.min(b)
     }
 
     proptest! {
@@ -128,17 +139,17 @@ mod tests {
         #[test]
         fn length_matches_max_delta(start in vec(), end in vec()) {
             let count = PlotLine2D::new(start, end).count();
-            let dx = (end.x - start.x).abs();
-            let dy = (end.y - start.y).abs();
-            prop_assert_eq!(count, dx.max(dy) as usize + 1);
+            let dx = abs_diff(end.x, start.x);
+            let dy = abs_diff(end.y, start.y);
+            prop_assert_eq!(count, dx.max(dy) + 1);
         }
 
         #[test]
         fn no_gaps(start in vec(), end in vec()) {
             let points: Vec<_> = PlotLine2D::new(start, end).collect();
             for w in points.windows(2) {
-                let dx = (w[1].x - w[0].x).abs();
-                let dy = (w[1].y - w[0].y).abs();
+                let dx = abs_diff(w[1].x, w[0].x);
+                let dy = abs_diff(w[1].y, w[0].y);
                 prop_assert!(dx <= 1 && dy <= 1, "step too large: {:?} -> {:?}", w[0], w[1]);
                 prop_assert!(dx + dy > 0, "duplicate point: {:?}", w[0]);
             }
