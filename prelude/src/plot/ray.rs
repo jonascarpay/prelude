@@ -18,6 +18,7 @@ pub struct Ray2D<T> {
 impl<T: Ring + Ord + Copy> Ray2D<T> {
     pub fn new(start: V2<T>, through: V2<T>) -> Self {
         let one = T::one();
+        let zero = T::zero();
         let (dx, sx) = if start.x < through.x {
             (through.x.minus(start.x), one)
         } else {
@@ -32,9 +33,10 @@ impl<T: Ring + Ord + Copy> Ray2D<T> {
         let (major, minor) = if x_major { (dx, dy) } else { (dy, dx) };
         let threshold = major.plus(major);
         let step = minor.plus(minor);
+        let s = if major == zero { v2(zero, zero) } else { v2(sx, sy) };
         Self {
             pos: start,
-            s: v2(sx, sy),
+            s,
             err: major,
             threshold,
             step,
@@ -120,6 +122,11 @@ mod tests {
                 let nexted = ray.next().unwrap();
                 prop_assert_eq!(peeked, nexted);
             }
+        }
+
+        #[test]
+        fn zero_is_stationary(start in vec()) {
+            prop_assert_eq!(plot_ray2d(start, start).unfold().1.unfold().0,start)
         }
     }
 }
