@@ -42,27 +42,19 @@ pub fn bresenham_sum_ours(start: V2<usize>, end: V2<usize>) -> V2<usize> {
 }
 
 pub struct PlotLine2D<T> {
-    x: T,
-    y: T,
-    x1: T,
-    y1: T,
-    dx: T,
-    dy: T,
-    sx: T,
-    sy: T,
+    pos: V2<T>,
+    end: V2<T>,
+    d: V2<T>,
+    s: V2<T>,
     err: T,
     started: bool,
 }
 
 impl<T: Ring + Ord + Copy> PlotLine2D<T> {
     pub fn new(start: V2<T>, end: V2<T>) -> Self {
-        let x = start.x;
-        let y = start.y;
-        let x1 = end.x;
-        let y1 = end.y;
         let one = T::one();
-        let dx_signed = x1.minus(x);
-        let dy_signed = y1.minus(y);
+        let dx_signed = end.x.minus(start.x);
+        let dy_signed = end.y.minus(start.y);
         let dx = if dx_signed < T::zero() {
             dx_signed.negate()
         } else {
@@ -73,18 +65,14 @@ impl<T: Ring + Ord + Copy> PlotLine2D<T> {
         } else {
             dy_signed.negate()
         };
-        let sx = if x < x1 { one } else { one.negate() };
-        let sy = if y < y1 { one } else { one.negate() };
+        let sx = if start.x < end.x { one } else { one.negate() };
+        let sy = if start.y < end.y { one } else { one.negate() };
         let err = dx.plus(dy);
         Self {
-            x,
-            y,
-            x1,
-            y1,
-            dx,
-            dy,
-            sx,
-            sy,
+            pos: start,
+            end,
+            d: v2(dx, dy),
+            s: v2(sx, sy),
             err,
             started: false,
         }
@@ -96,21 +84,21 @@ impl<T: Ring + Ord + Copy> Iterator for PlotLine2D<T> {
 
     fn next(&mut self) -> Option<V2<T>> {
         if self.started {
-            if self.x == self.x1 && self.y == self.y1 {
+            if self.pos == self.end {
                 return None;
             }
             let e2 = self.err.plus(self.err);
-            if e2 >= self.dy {
-                self.err = self.err.plus(self.dy);
-                self.x = self.x.plus(self.sx);
+            if e2 >= self.d.y {
+                self.err = self.err.plus(self.d.y);
+                self.pos.x = self.pos.x.plus(self.s.x);
             }
-            if e2 <= self.dx {
-                self.err = self.err.plus(self.dx);
-                self.y = self.y.plus(self.sy);
+            if e2 <= self.d.x {
+                self.err = self.err.plus(self.d.x);
+                self.pos.y = self.pos.y.plus(self.s.y);
             }
         } else {
             self.started = true;
         }
-        Some(v2(self.x, self.y))
+        Some(self.pos)
     }
 }
