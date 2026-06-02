@@ -2,6 +2,10 @@ use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, InnerProductSpace, Ring, VectorSpace,
 };
 
+pub const fn v3<T>(x: T, y: T, z: T) -> V3<T> {
+    V3 { x, y, z }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct V3<T> {
     pub x: T,
@@ -13,15 +17,17 @@ impl<T> V3<T> {
     pub fn new(x: T, y: T, z: T) -> V3<T> {
         V3 { x, y, z }
     }
+    pub fn pack(self) -> [T; 3] {
+        [self.x, self.y, self.z]
+    }
+    pub fn unpack([x, y, z]: [T; 3]) -> Self {
+        V3 { x, y, z }
+    }
 }
 
 impl<T: Ring> V3<T> {
     pub fn x() -> Self {
-        V3 {
-            x: T::one(),
-            y: T::zero(),
-            z: T::zero(),
-        }
+        v3(T::one(), T::zero(), T::zero())
     }
     pub fn y() -> Self {
         V3 {

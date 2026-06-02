@@ -5,7 +5,7 @@ use std::{
 
 use crate::algebra::{
     abstract_::{additive::iter_sum_reduce, Additive, Ring, VectorSpace},
-    geometric::vec2::V2,
+    geometric::{vec2::V2, vec3::V3},
 };
 
 /// Alias for `Matrix::from_rows`.
@@ -135,6 +135,13 @@ impl<T: Ring> Mul<V2<T>> for Matrix<T, 2, 2> {
     type Output = V2<T>;
     fn mul(self, rhs: V2<T>) -> V2<T> {
         V2::unpack(generic_vecmul(self, rhs.pack(), |a, b| a.clone().mult(b.clone())))
+    }
+}
+
+impl<T: Ring> Mul<V3<T>> for Matrix<T, 3, 3> {
+    type Output = V3<T>;
+    fn mul(self, rhs: V3<T>) -> V3<T> {
+        V3::unpack(generic_vecmul(self, rhs.pack(), |a, b| a.clone().mult(b.clone())))
     }
 }
 

@@ -1,4 +1,10 @@
-use crate::algebra::{abstract_::InnerProductSpace, geometric::complex::Complex};
+use crate::algebra::{
+    abstract_::InnerProductSpace,
+    geometric::{
+        complex::Complex,
+        vec3::{v3, V3},
+    },
+};
 
 use super::super::abstract_::{impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace};
 
@@ -59,6 +65,10 @@ impl<T> V2<T> {
     }
     pub fn unpack([x, y]: [T; 2]) -> Self {
         V2 { x, y }
+    }
+    pub fn pad(self, z: T) -> V3<T> {
+        let V2 { x, y } = self;
+        v3(x, y, z)
     }
 }
 

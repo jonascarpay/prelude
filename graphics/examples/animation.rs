@@ -2,7 +2,7 @@ use std::{num::NonZeroU32, rc::Rc};
 
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
-    algebra::geometric::vec2::v2,
+    algebra::{geometric::vec2::v2, geometric::vec3::v3, linear::matrix::Matrix},
     plot::ray::{plot_ray2d, Ray2D},
 };
 use softbuffer as sb;
@@ -11,6 +11,19 @@ use winit::{
     raw_window_handle::HasDisplayHandle,
     window::Window,
 };
+
+/// Maps buffer pixel coords (`0..w`, `0..h`, y-down) to normalized device
+/// coordinates (`-1..1`, y-up), in homogeneous form. Apply to `v3(x, y, 1.0)`;
+/// the result's `x`/`y` are the screen-space coords (`z` stays `1`).
+fn screen_to_ndc(w: f32, h: f32) -> Matrix<f32, 3, 3> {
+    Matrix::from_rows([[2.0 / w, 0.0, -1.0], [0.0, -2.0 / h, 1.0], [0.0, 0.0, 1.0]])
+}
+
+/// Inverse of [`screen_to_ndc`]: maps NDC (`-1..1`, y-up) back to buffer pixel
+/// coords (`0..w`, `0..h`, y-down), in homogeneous form. Apply to `v3(x, y, 1.0)`.
+fn ndc_to_screen(w: f32, h: f32) -> Matrix<f32, 3, 3> {
+    Matrix::from_rows([[w / 2.0, 0.0, w / 2.0], [0.0, -h / 2.0, h / 2.0], [0.0, 0.0, 1.0]])
+}
 
 struct App<D> {
     context: sb::Context<D>,
@@ -60,15 +73,26 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let sctx = self.surface_context.as_mut().expect("Redraw without surface context");
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
-                let mut ray: Ray2D<usize> = plot_ray2d(v2(100, 100), v2(100, 100));
+                let size = view.size();
+                let to_ndc = screen_to_ndc(size.x as f32, size.y as f32);
+                let to_screen = ndc_to_screen(size.x as f32, size.y as f32);
+                // Define the ray in resolution-independent NDC, then map to pixels.
+                let from_ndc = |x: f32, y: f32| {
+                    let p = to_screen * v3(x, y, 1.0);
+                    v2(p.x as usize, p.y as usize)
+                };
+                let mut ray: Ray2D<usize> = plot_ray2d(from_ndc(-0.9, -0.9), from_ndc(0.6, 0.3));
                 for _ in 0..10000 {
                     let p = ray.step();
                     *view.get_mut(p.map(|i| i as usize)) = 0xFFFFFFFF;
                     let n = ray.peek();
-                    if n.x >= 1820 {
+                    // Bounce off the screen edges, expressed in NDC: the walls are
+                    // at |x| = 1 and |y| = 1 regardless of resolution.
+                    let ndc = to_ndc * v3(n.x as f32, n.y as f32, 1.0);
+                    if ndc.x.abs() >= 1.0 {
                         ray.reflect_in_y();
                     }
-                    if n.y >= 2080 {
+                    if ndc.y.abs() >= 1.0 {
                         ray.reflect_in_x();
                     }
                 }
