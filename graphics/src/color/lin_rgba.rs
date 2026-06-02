@@ -1,4 +1,4 @@
-use crate::color::lin_rgb::LinRgb8;
+use crate::color::lin_rgb::LinRgb;
 use prelude::{
     algebra::{
         abstract_::{Additive, Ring, VectorSpace},
@@ -7,56 +7,42 @@ use prelude::{
     impl_additive_ops, impl_vector_space_mul,
 };
 
-/// 8-bit linear RGBA.
+/// Linear RGBA, generic over the per-channel pixel type `T`.
 ///
 /// Note while this forms an additive group, and additive blending is valid, subtracting is _not_.
 /// Subtraction is defined, but only as the inverse operation of addition.
 /// Naively subtracting two colors can lead to invalid colors that violate the premultiplied
 /// contraint.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LinRgba {
+pub struct LinRgba<T> {
     // Invariant: r, g, b <= a.
-    r: Unorm8,
-    g: Unorm8,
-    b: Unorm8,
-    a: Unorm8,
+    r: T,
+    g: T,
+    b: T,
+    a: T,
 }
 
-impl LinRgba {
-    pub const TRANSPARENT: Self = Self {
-        r: Unorm8::ZERO,
-        g: Unorm8::ZERO,
-        b: Unorm8::ZERO,
-        a: Unorm8::ZERO,
-    };
-    pub const BLACK: Self = Self {
-        r: Unorm8::ZERO,
-        g: Unorm8::ZERO,
-        b: Unorm8::ZERO,
-        a: Unorm8::ONE,
-    };
-    pub const WHITE: Self = Self {
-        r: Unorm8::ONE,
-        g: Unorm8::ONE,
-        b: Unorm8::ONE,
-        a: Unorm8::ONE,
-    };
+/// 8-bit linear RGBA — the storage/compositing representation.
+pub type LinRgba8 = LinRgba<Unorm8>;
 
-    pub const fn r(self) -> Unorm8 {
+impl<T: Copy> LinRgba<T> {
+    pub fn r(self) -> T {
         self.r
     }
-    pub const fn g(self) -> Unorm8 {
+    pub fn g(self) -> T {
         self.g
     }
-    pub const fn b(self) -> Unorm8 {
+    pub fn b(self) -> T {
         self.b
     }
-    pub const fn a(self) -> Unorm8 {
+    pub fn a(self) -> T {
         self.a
     }
+}
 
+impl<T: PartialOrd + Copy> LinRgba<T> {
     /// Returns `None` if the premultiplied invariant `r, g, b <= a` is violated.
-    pub const fn from_premultiplied(r: Unorm8, g: Unorm8, b: Unorm8, a: Unorm8) -> Option<Self> {
+    pub fn from_premultiplied(r: T, g: T, b: T, a: T) -> Option<Self> {
         let c = Self { r, g, b, a };
         if c.valid_premult() {
             Some(c)
@@ -66,41 +52,68 @@ impl LinRgba {
     }
 
     /// Checks the invariant i.e. `r, g, b <= a`.
-    const fn valid_premult(self) -> bool {
-        self.r.0 <= self.a.0 && self.g.0 <= self.a.0 && self.b.0 <= self.a.0
+    fn valid_premult(self) -> bool {
+        self.r <= self.a && self.g <= self.a && self.b <= self.a
+    }
+}
+
+impl<T: Ring> LinRgba<T> {
+    pub fn transparent() -> Self {
+        Self {
+            r: T::zero(),
+            g: T::zero(),
+            b: T::zero(),
+            a: T::zero(),
+        }
+    }
+    pub fn black() -> Self {
+        Self {
+            r: T::zero(),
+            g: T::zero(),
+            b: T::zero(),
+            a: T::one(),
+        }
+    }
+    pub fn white() -> Self {
+        Self {
+            r: T::one(),
+            g: T::one(),
+            b: T::one(),
+            a: T::one(),
+        }
     }
 
-    /// Opaque (alpha = ONE) — premult invariant trivially holds.
-    pub const fn from_rgb(rgb: LinRgb8) -> Self {
+    /// Opaque (alpha = one) — premult invariant trivially holds.
+    pub fn from_rgb(rgb: LinRgb<T>) -> Self {
         Self {
             r: rgb.r,
             g: rgb.g,
             b: rgb.b,
-            a: Unorm8::ONE,
+            a: T::one(),
         }
     }
 
     /// Premultiplies `rgb` by `alpha`.
-    pub fn from_rgb_transparent(rgb: LinRgb8, alpha: Unorm8) -> Self {
+    pub fn from_rgb_transparent(rgb: LinRgb<T>, alpha: T) -> Self {
         Self {
-            r: rgb.r.mult(alpha),
-            g: rgb.g.mult(alpha),
-            b: rgb.b.mult(alpha),
+            r: rgb.r.mult(alpha.clone()),
+            g: rgb.g.mult(alpha.clone()),
+            b: rgb.b.mult(alpha.clone()),
             a: alpha,
         }
     }
 
     /// Porter-Duff source-over: `self` (foreground) composited on top of `dst` (background).
-    /// `self + dst * (ONE - self.a)`.
+    /// `self + dst * (one - self.a)`.
     ///
-    /// Forms a non-commutative monoid with TRANSPARENT as the identity (save for some potential rounding issues on the associativity)
+    /// Forms a non-commutative monoid with `transparent()` as the identity (save for some potential rounding issues on the associativity)
     pub fn over(self, dst: Self) -> Self {
-        let k = Unorm8::ONE.minus(self.a);
+        let k = T::one().minus(self.a.clone());
         self.plus(dst.scale(k))
     }
 }
 
-impl Additive for LinRgba {
+impl<T: Additive> Additive for LinRgba<T> {
     fn plus(self, rhs: Self) -> Self {
         Self {
             r: self.r.plus(rhs.r),
@@ -118,7 +131,12 @@ impl Additive for LinRgba {
         }
     }
     fn zero() -> Self {
-        Self::TRANSPARENT
+        Self {
+            r: T::zero(),
+            g: T::zero(),
+            b: T::zero(),
+            a: T::zero(),
+        }
     }
     fn negate(self) -> Self {
         Self {
@@ -130,66 +148,68 @@ impl Additive for LinRgba {
     }
 }
 
-impl VectorSpace for LinRgba {
-    type Scalar = Unorm8;
-    fn scale(self, c: Unorm8) -> Self {
+impl<T: Ring> VectorSpace for LinRgba<T> {
+    type Scalar = T;
+    fn scale(self, c: T) -> Self {
         Self {
-            r: self.r.mult(c),
-            g: self.g.mult(c),
-            b: self.b.mult(c),
+            r: self.r.mult(c.clone()),
+            g: self.g.mult(c.clone()),
+            b: self.b.mult(c.clone()),
             a: self.a.mult(c),
         }
     }
 }
 
-impl From<LinRgb8> for LinRgba {
-    fn from(c: LinRgb8) -> Self {
+impl<T: Ring> From<LinRgb<T>> for LinRgba<T> {
+    fn from(c: LinRgb<T>) -> Self {
         Self::from_rgb(c)
     }
 }
 
-impl_additive_ops!([] LinRgba);
-impl_vector_space_mul!([] LinRgba);
+impl_additive_ops!([T: Additive] LinRgba<T>);
+impl_vector_space_mul!([T: Ring] LinRgba<T>);
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::color::lin_rgb::LinRgb8;
     use proptest::prelude::*;
 
-    impl Arbitrary for LinRgba {
+    impl<T: Arbitrary + Ring + 'static> Arbitrary for LinRgba<T> {
         type Parameters = ();
         type Strategy = BoxedStrategy<Self>;
         fn arbitrary_with(_: ()) -> Self::Strategy {
-            (any::<LinRgb8>(), any::<Unorm8>())
+            (any::<LinRgb<T>>(), any::<T>())
                 .prop_map(|(rgb, alpha)| LinRgba::from_rgb_transparent(rgb, alpha))
                 .boxed()
         }
     }
 
     proptest! {
+        // Explicitly testing LinRgba8 here
         #[test]
-        fn plus_commutative(a: LinRgba, b: LinRgba) {
+        fn plus_commutative(a: LinRgba8, b: LinRgba8) {
             prop_assert_eq!(a + b, b + a);
         }
 
         #[test]
-        fn plus_associative(a: LinRgba, b: LinRgba, c: LinRgba) {
+        fn plus_associative(a: LinRgba8, b: LinRgba8, c: LinRgba8) {
             prop_assert_eq!((a + b) + c, a + (b + c));
         }
 
         #[test]
-        fn plus_identity(a: LinRgba) {
-            prop_assert_eq!(a + LinRgba::TRANSPARENT, a);
+        fn plus_identity(a: LinRgba8) {
+            prop_assert_eq!(a + LinRgba::transparent(), a);
         }
 
         #[test]
-        fn scale_identity(a: LinRgba) {
+        fn scale_identity(a: LinRgba8) {
             prop_assert_eq!(a * Unorm8::ONE, a);
         }
 
         #[test]
-        fn scale_zero(a: LinRgba) {
-            prop_assert_eq!(a * Unorm8::ZERO, LinRgba::TRANSPARENT);
+        fn scale_zero(a: LinRgba8) {
+            prop_assert_eq!(a * Unorm8::ZERO, LinRgba::transparent());
         }
 
         #[test]
@@ -198,7 +218,7 @@ mod tests {
         }
 
         #[test]
-        fn from_premultiplied_round_trip(a: LinRgba) {
+        fn from_premultiplied_round_trip(a: LinRgba8) {
             prop_assert_eq!(
                 LinRgba::from_premultiplied(a.r(), a.g(), a.b(), a.a()),
                 Some(a),
@@ -215,29 +235,29 @@ mod tests {
         }
 
         #[test]
-        fn over_transparent_is_identity(a: LinRgba) {
-            prop_assert_eq!(a.over(LinRgba::TRANSPARENT), a);
-            prop_assert_eq!(LinRgba::TRANSPARENT.over(a), a);
+        fn over_transparent_is_identity(a: LinRgba8) {
+            prop_assert_eq!(a.over(LinRgba::transparent()), a);
+            prop_assert_eq!(LinRgba::transparent().over(a), a);
         }
 
         #[test]
-        fn over_opaque_foreground(rgb: LinRgb8, dst: LinRgba) {
-            let fg: LinRgba = rgb.into();
+        fn over_opaque_foreground(rgb: LinRgb8, dst: LinRgba8) {
+            let fg: LinRgba8 = rgb.into();
             prop_assert_eq!(fg.over(dst), fg);
         }
 
         #[test]
-        fn over_preserves_premult(a: LinRgba, b: LinRgba) {
+        fn over_preserves_premult(a: LinRgba8, b: LinRgba8) {
             prop_assert!(a.over(b).valid_premult());
         }
 
         #[test]
-        fn plus_preserves_premult(a: LinRgba, b: LinRgba) {
+        fn plus_preserves_premult(a: LinRgba8, b: LinRgba8) {
             prop_assert!((a + b).valid_premult());
         }
 
         #[test]
-        fn scale_preserves_premult(a: LinRgba, c: Unorm8) {
+        fn scale_preserves_premult(a: LinRgba8, c: Unorm8) {
             prop_assert!((a * c).valid_premult());
         }
     }
