@@ -54,6 +54,12 @@ impl<T> V2<T> {
             y: self.y.into(),
         }
     }
+    pub fn pack(self) -> [T; 2] {
+        [self.x, self.y]
+    }
+    pub fn unpack([x, y]: [T; 2]) -> Self {
+        V2 { x, y }
+    }
 }
 
 impl<T: Additive> Additive for V2<T> {

@@ -53,8 +53,14 @@ impl<T: Ord + Additive> OrderedAdditive for T {}
 
 #[inline]
 pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
-    // TODO asm peep
     iter.fold(T::zero(), T::plus)
+}
+
+/// Sum of an iterator, does not add the 0th and the first element.
+/// Tends to optimizer better for small fixed-size iterators, worst for large/dynamic ones.
+#[inline]
+pub fn iter_sum_reduce<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
+    iter.reduce(T::plus).unwrap_or(T::zero())
 }
 
 impl Additive for () {
