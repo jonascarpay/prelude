@@ -2,7 +2,11 @@ use std::{num::NonZeroU32, rc::Rc};
 
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
-    algebra::{geometric::vec2::v2, geometric::vec3::v3, linear::matrix::Matrix},
+    algebra::{
+        abstract_::Curve,
+        geometric::vec2::{v2, V2},
+        polynomial::linear::{remap, Linear},
+    },
     plot::ray::{plot_ray2d, Ray2D},
 };
 use softbuffer as sb;
@@ -13,16 +17,17 @@ use winit::{
 };
 
 /// Maps buffer pixel coords (`0..w`, `0..h`, y-down) to normalized device
-/// coordinates (`-1..1`, y-up), in homogeneous form. Apply to `v3(x, y, 1.0)`;
-/// the result's `x`/`y` are the screen-space coords (`z` stays `1`).
-fn screen_to_ndc(w: f32, h: f32) -> Matrix<f32, 3, 3> {
-    Matrix::from_rows([[2.0 / w, 0.0, -1.0], [0.0, -2.0 / h, 1.0], [0.0, 0.0, 1.0]])
+/// coordinates (`-1..1`, y-up). The map is axis-separable, so it's a `Linear`
+/// per axis (`ndc = c1·coord + c0`); the y axis is flipped via a negative slope.
+fn screen_to_ndc(w: f32, h: f32) -> V2<Linear<f32>> {
+    v2(Linear { c1: 2.0 / w, c0: -1.0 }, Linear { c1: -2.0 / h, c0: 1.0 })
 }
 
 /// Inverse of [`screen_to_ndc`]: maps NDC (`-1..1`, y-up) back to buffer pixel
-/// coords (`0..w`, `0..h`, y-down), in homogeneous form. Apply to `v3(x, y, 1.0)`.
-fn ndc_to_screen(w: f32, h: f32) -> Matrix<f32, 3, 3> {
-    Matrix::from_rows([[w / 2.0, 0.0, w / 2.0], [0.0, -h / 2.0, h / 2.0], [0.0, 0.0, 1.0]])
+/// coords. Derived mechanically by inverting each axis, so it can never drift
+/// out of sync with the forward map.
+fn ndc_to_screen(w: f32, h: f32) -> V2<Linear<f32>> {
+    screen_to_ndc(w, h).map(Linear::inverse)
 }
 
 struct App<D> {
@@ -74,11 +79,15 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
                 let size = view.size();
-                let to_ndc = screen_to_ndc(size.x as f32, size.y as f32);
+                let to_ndc = v2(
+                    remap(0. ..size.x as f64, -1. ..1.), //
+                    remap(0. ..size.y as f64, 1. ..-1.), //
+                );
+                // TODO Group so we can do .inverse here
                 let to_screen = ndc_to_screen(size.x as f32, size.y as f32);
                 // Define the ray in resolution-independent NDC, then map to pixels.
                 let from_ndc = |x: f32, y: f32| {
-                    let p = to_screen * v3(x, y, 1.0);
+                    let p = to_screen.evaluate(v2(x, y));
                     v2(p.x as usize, p.y as usize)
                 };
                 let mut ray: Ray2D<usize> = plot_ray2d(from_ndc(-0.9, -0.9), from_ndc(0.6, 0.3));
@@ -88,7 +97,7 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                     let n = ray.peek();
                     // Bounce off the screen edges, expressed in NDC: the walls are
                     // at |x| = 1 and |y| = 1 regardless of resolution.
-                    let ndc = to_ndc * v3(n.x as f32, n.y as f32, 1.0);
+                    let ndc = to_ndc.evaluate(v2(n.x as f32, n.y as f32));
                     if ndc.x.abs() >= 1.0 {
                         ray.reflect_in_y();
                     }

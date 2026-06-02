@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use crate::algebra::abstract_::VectorSpace;
+use crate::algebra::{abstract_::VectorSpace, v2, V2};
 
 pub trait Curve {
     type Domain;
@@ -93,6 +93,15 @@ impl<X, Y, F: FnOnce(X) -> Y> Curve for FnCurve<X, Y, F> {
 
     fn evaluate(self, x: Self::Domain) -> Self::Codomain {
         (self.f)(x)
+    }
+}
+
+// Useful for affine mappings
+impl<C: Curve> Curve for V2<C> {
+    type Domain = V2<C::Domain>;
+    type Codomain = V2<C::Codomain>;
+    fn evaluate(self, x: Self::Domain) -> Self::Codomain {
+        v2(self.x.evaluate(x.x), self.y.evaluate(x.y))
     }
 }
 

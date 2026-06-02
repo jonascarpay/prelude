@@ -1,5 +1,7 @@
+use std::ops::Range;
+
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
+    field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
 };
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
@@ -7,6 +9,51 @@ use super::super::abstract_::{
 pub struct Linear<T> {
     pub c1: T,
     pub c0: T,
+}
+
+pub fn lerp<T: Additive>(zero: T, one: T) -> Linear<T> {
+    Linear {
+        c1: one.minus(zero.clone()),
+        c0: zero,
+    }
+}
+
+pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
+    let xa = from.start;
+    let xb = from.end;
+    let ya = to.start;
+    let yb = to.end;
+    // equivalently: lerp(ya, yb).compose(lerp(xa, xb).inverse())
+    let inv = (xb.minus(xa.clone())).recip();
+    Linear {
+        c1: yb.minus(ya.clone()).mult(inv),
+        c0: ya.minus(xa),
+    }
+}
+
+impl<T: Field> Linear<T> {
+    pub fn inverse(self) -> Self {
+        let inv = self.c1.recip();
+        Linear {
+            c1: inv.clone(),
+            c0: self.c0.negate().mult(inv),
+        }
+    }
+    pub fn identity() -> Self {
+        Linear {
+            c1: T::one(),
+            c0: T::zero(),
+        }
+    }
+    // Forms a group!
+    pub fn compose(self, rhs: Self) -> Self {
+        let Linear { c1: a, c0: b } = self;
+        let Linear { c1: c, c0: d } = rhs;
+        Linear {
+            c1: a.clone().mult(c),
+            c0: a.mult(d).plus(b),
+        }
+    }
 }
 
 impl<T: Additive> Additive for Linear<T> {
