@@ -149,6 +149,20 @@ impl<T: Field> Field for Complex<T> {
             xy: b.mult(c).minus(a.mult(d)).div(q),
         }
     }
+
+    fn checked_div(self, rhs: Self) -> Option<Self> {
+        let Complex { s: a, xy: b } = self;
+        let Complex { s: c, xy: d } = rhs;
+        let q = c.clone().squared().plus(d.clone().squared());
+
+        Some(Complex {
+            s: a.clone()
+                .mult(c.clone())
+                .plus(b.clone().mult(d.clone()))
+                .checked_div(q.clone())?,
+            xy: b.mult(c).minus(a.mult(d)).checked_div(q)?,
+        })
+    }
 }
 
 impl_additive_ops!([T: Additive] Complex<T>);

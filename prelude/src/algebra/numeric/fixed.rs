@@ -128,6 +128,13 @@ impl<T: FixedBase, const FRAC_BITS: u32> Field for Fixed<T, FRAC_BITS> {
             raw: T::narrow((a << FRAC_BITS).div_euclid(b)),
         }
     }
+    fn checked_div(self, rhs: Self) -> Option<Self> {
+        let a = self.raw.widen();
+        let b = rhs.raw.widen();
+        Some(Fixed {
+            raw: T::narrow((a << FRAC_BITS).checked_div_euclid(b)?),
+        })
+    }
 }
 
 macro_rules! impl_fixed_base {
