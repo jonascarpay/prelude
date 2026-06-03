@@ -14,7 +14,8 @@ pub trait EuclideanRing: Ring + Sized {
 }
 
 /// Greatest common divisor via the Euclidean algorithm.
-/// The result is non-negative; `gcd(0, 0) == 0`.
+/// `gcd(0, 0) == 0`.
+///
 // TODO: might be worth making a trait method, since bignums might want to override with binary gcd
 pub fn gcd<T: EuclideanRing + Ord>(mut a: T, mut b: T) -> T {
     while b != T::zero() {
@@ -72,12 +73,22 @@ mod tests {
 
     #[test]
     fn known_gcds() {
+        // assert_eq!(gcd(0, 0), 0);
+        // assert_eq!(gcd(0, 9), 1);
+        // assert_eq!(gcd(0, 1), 1);
         assert_eq!(gcd(6, 15), 3);
         assert_eq!(gcd(6, 8), 2);
         assert_eq!(gcd(12, 20), 4);
     }
 
     proptest! {
+
+        #[test]
+        fn gcd_associative(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid underflow near boundaries */
+            prop_assert_eq!(gcd(a,b), gcd(b,a));
+        }
+
         #[test]
         fn gcd_divides_both(a: i32, b: i32) {
             let (a, b) = (a as i64, b as i64); /* upcast to avoid underflow near boundaries */
@@ -89,6 +100,17 @@ mod tests {
             if b != 0 {
                 prop_assert_eq!(b % g, 0);
             }
+        }
+
+        #[test]
+        fn gcd_is_positive(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid underflow near boundaries */
+            prop_assert!((a == 0 && b == 0) || gcd(a, b) > 0);
+        }
+
+        #[test]
+        fn gcd_zero_is_abs(a: i32) {
+            prop_assert_eq!(gcd(0, a), a.abs());
         }
     }
 }

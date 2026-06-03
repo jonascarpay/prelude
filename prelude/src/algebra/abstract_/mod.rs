@@ -10,6 +10,7 @@ pub mod vector_space;
 pub use {
     additive::Additive,
     curve::{Curve, DifferentiableCurve},
+    euclidean_ring::EuclideanRing,
     group::{Group, Monoid, Semigroup},
     inner_product_space::InnerProductSpace,
     ring::Ring,

@@ -8,6 +8,8 @@ pub trait Additive: Sized + Clone {
     //   plus_mut_ref: &mut T -> &T -> ()
     // with defaults that just clone/core::mem::replace
 
+    // TODO: investigate whether we want checked versions, instead of forcing wrapping behavior.
+
     /// An associative, commutative operation
     fn plus(self, rhs: Self) -> Self;
 
@@ -21,7 +23,7 @@ pub trait Additive: Sized + Clone {
         self.plus(rhs.negate())
     }
 
-    fn negated(self) -> Self {
+    fn negated(&self) -> Self {
         self.clone().negate()
     }
 
@@ -46,6 +48,10 @@ pub trait EqAdditive: Eq + Additive {
     fn is_zero(&self) -> bool {
         self == &Self::zero()
     }
+
+    fn is_nonzero(&self) -> bool {
+        !self.is_zero()
+    }
 }
 
 pub trait OrderedAdditive: Ord + Additive {
@@ -55,6 +61,10 @@ pub trait OrderedAdditive: Ord + Additive {
 
     fn is_positive(&self) -> bool {
         self.cmp_zero().is_gt()
+    }
+
+    fn is_negative(&self) -> bool {
+        self.cmp_zero().is_lt()
     }
 
     fn is_nonnegative(&self) -> bool {
