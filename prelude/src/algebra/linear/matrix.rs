@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::algebra::{
-    abstract_::{additive::iter_sum_reduce, Additive, Ring, VectorSpace},
+    abstract_::{additive::iter_sum_reduce, Additive, Monoid, Ring, Semigroup, VectorSpace},
     geometric::{vec2::V2, vec3::V3},
 };
 
@@ -21,14 +21,6 @@ pub struct Matrix<T, const R: usize, const C: usize> {
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     pub const fn from_rows(rows: [[T; C]; R]) -> Self {
         Self { rows }
-    }
-}
-
-impl<T: Ring, const N: usize> Matrix<T, N, N> {
-    pub fn identity() -> Self {
-        Matrix {
-            rows: from_fn(|r| from_fn(|c| if r == c { T::one() } else { T::zero() })),
-        }
     }
 }
 
@@ -73,6 +65,22 @@ impl<T: Ring, const R: usize, const C: usize> VectorSpace for Matrix<T, R, C> {
         }
     }
 }
+
+impl<T: Ring, const N: usize> Semigroup for Matrix<T, N, N> {
+    fn compose(self, rhs: Self) -> Self {
+        self.mult(rhs)
+    }
+}
+
+impl<T: Ring, const N: usize> Monoid for Matrix<T, N, N> {
+    fn identity() -> Self {
+        Matrix {
+            rows: from_fn(|r| from_fn(|c| if r == c { T::one() } else { T::zero() })),
+        }
+    }
+}
+
+// TODO: inverse
 
 impl<T: Clone, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn transpose(self) -> Matrix<T, C, R> {

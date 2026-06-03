@@ -38,7 +38,7 @@ pub trait Additive: Sized + Clone {
     // Con:
     //  - `Linear` is both an additive group and a group w.r.t. function composition
     //  - `LinRgba` is both an additive group and a monoid w.r.t. `over`
-    //  - Matrices are more interesting as a multiplicative group
+    //  - Matrices/complex numbers are more interesting as a multiplicative group
     //  - Multiplicative group ambiguity
 }
 
