@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use crate::algebra::abstract_::group::{Group, Monoid, Semigroup};
+
 use super::super::abstract_::{
     field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
 };
@@ -31,27 +33,32 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     }
 }
 
-impl<T: Field> Linear<T> {
-    pub fn inverse(self) -> Self {
-        let inv = self.c1.recip();
-        Linear {
-            c1: inv.clone(),
-            c0: self.c0.negate().mult(inv),
-        }
-    }
-    pub fn identity() -> Self {
-        Linear {
-            c1: T::one(),
-            c0: T::zero(),
-        }
-    }
-    // Forms a group!
-    pub fn compose(self, rhs: Self) -> Self {
+impl<T: Ring> Semigroup for Linear<T> {
+    fn compose(self, rhs: Self) -> Self {
         let Linear { c1: a, c0: b } = self;
         let Linear { c1: c, c0: d } = rhs;
         Linear {
             c1: a.clone().mult(c),
             c0: a.mult(d).plus(b),
+        }
+    }
+}
+
+impl<T: Ring> Monoid for Linear<T> {
+    fn identity() -> Self {
+        Linear {
+            c1: T::one(),
+            c0: T::zero(),
+        }
+    }
+}
+
+impl<T: Field> Group for Linear<T> {
+    fn inverse(self) -> Self {
+        let inv = self.c1.recip();
+        Linear {
+            c1: inv.clone(),
+            c0: self.c0.negate().mult(inv),
         }
     }
 }

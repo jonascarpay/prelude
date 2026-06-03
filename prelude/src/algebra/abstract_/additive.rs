@@ -1,5 +1,13 @@
+use crate::algebra::abstract_::group::{Group, Monoid, Semigroup};
+
 /// An additive group
 pub trait Additive: Sized + Clone {
+    // TODO: investigate whether it makes sense to have
+    //   plus_ref: &T -> &T -> T
+    //   plus_mut: &mut T -> T -> ()
+    //   plus_mut_ref: &mut T -> &T -> ()
+    // with defaults that just clone/core::mem::replace
+
     /// An associative, commutative operation
     fn plus(self, rhs: Self) -> Self;
 
@@ -20,6 +28,17 @@ pub trait Additive: Sized + Clone {
     fn incr_by(&mut self, addend: Self) {
         *self = self.clone().plus(addend);
     }
+
+    // Should this be a subtrait of `Group`?
+    // Pro:
+    //   - Nicely extends `Group` by only adding the commutativity
+    //   - For numbers, it's the most natural group anyway
+    //   - Combines iter sum/concat
+    //   - Removes need for `AsAdditiveGroup`
+    // Con:
+    //  - `Linear` is both an additive group and a group w.r.t. function composition
+    //  - `LinRgba` is both an additive group and a monoid w.r.t. `over`
+    //  - Multiplicative group ambiguity
 }
 
 pub trait EqAdditive: Eq + Additive {
@@ -45,19 +64,35 @@ pub trait OrderedAdditive: Ord + Additive {
 impl<T: Eq + Additive> EqAdditive for T {}
 impl<T: Ord + Additive> OrderedAdditive for T {}
 
-// TODO: investigate whether it makes sense to have
-//   plus_ref: &T -> &T -> T
-//   plus_mut: &mut T -> T -> ()
-//   plus_mut_ref: &mut T -> &T -> ()
-// with defaults that just clone/core::mem::replace
+/// newtype wrapper that turns an `Additive` into a `Group`
+pub struct AsAdditiveGroup<T>(pub T);
+// TODO Additive impl
+
+impl<T: Additive> Semigroup for AsAdditiveGroup<T> {
+    fn compose(self, rhs: Self) -> Self {
+        AsAdditiveGroup(self.0.plus(rhs.0))
+    }
+}
+
+impl<T: Additive> Monoid for AsAdditiveGroup<T> {
+    fn identity() -> Self {
+        AsAdditiveGroup(T::zero())
+    }
+}
+
+impl<T: Additive> Group for AsAdditiveGroup<T> {
+    fn inverse(self) -> Self {
+        AsAdditiveGroup(self.0.negate())
+    }
+}
 
 #[inline]
 pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
     iter.fold(T::zero(), T::plus)
 }
 
-/// Sum of an iterator, does not add the 0th and the first element.
-/// Tends to optimizer better for small fixed-size iterators, worst for large/dynamic ones.
+/// Sum of an iterator, does not add 0 and the first element.
+/// Tends to optimizer better for small fixed-size iterators, worse for large/dynamic ones.
 #[inline]
 pub fn iter_sum_reduce<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
     iter.reduce(T::plus).unwrap_or(T::zero())

@@ -1,18 +1,22 @@
 use crate::color::lin_rgb::LinRgb;
 use prelude::{
     algebra::{
-        abstract_::{Additive, Ring, VectorSpace},
+        abstract_::{
+            group::{Monoid, Semigroup},
+            Additive, Ring, VectorSpace,
+        },
         numeric::unorm8::Unorm8,
     },
     impl_additive_ops, impl_vector_space_mul,
 };
 
-/// Linear RGBA, generic over the per-channel pixel type `T`.
+/// Linear RGBA.
 ///
-/// Note while this forms an additive group, and additive blending is valid, subtracting is _not_.
-/// Subtraction is defined, but only as the inverse operation of addition.
-/// Naively subtracting two colors can lead to invalid colors that violate the premultiplied
-/// contraint.
+/// RGBA is the preferred space for image compositing:
+/// - The primary algebra for RGBA is monoidal, with composition being overlaying one value on top of the other, respecting transparency.
+/// - While this also forms a useful vector space, it should really only be used that way for filtering/image interpolation.
+///   Otherwise it's easy to leave the gamut or violate the premultiplication constraint.
+///   For physical color algebra, prefer RGB.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LinRgba<T> {
     // Invariant: r, g, b <= a.
@@ -102,14 +106,22 @@ impl<T: Ring> LinRgba<T> {
             a: alpha,
         }
     }
+}
 
+impl<T: Ring> Semigroup for LinRgba<T> {
     /// Porter-Duff source-over: `self` (foreground) composited on top of `dst` (background).
     /// `self + dst * (one - self.a)`.
     ///
     /// Forms a non-commutative monoid with `transparent()` as the identity (save for some potential rounding issues on the associativity)
-    pub fn over(self, dst: Self) -> Self {
+    fn compose(self, rhs: Self) -> Self {
         let k = T::one().minus(self.a.clone());
-        self.plus(dst.scale(k))
+        self.plus(rhs.scale(k))
+    }
+}
+
+impl<T: Ring> Monoid for LinRgba<T> {
+    fn identity() -> Self {
+        Self::transparent()
     }
 }
 
@@ -166,6 +178,7 @@ impl<T: Ring> From<LinRgb<T>> for LinRgba<T> {
     }
 }
 
+// TODO probably just remove these
 impl_additive_ops!([T: Additive] LinRgba<T>);
 impl_vector_space_mul!([T: Ring] LinRgba<T>);
 
@@ -236,19 +249,19 @@ mod tests {
 
         #[test]
         fn over_transparent_is_identity(a: LinRgba8) {
-            prop_assert_eq!(a.over(LinRgba::transparent()), a);
-            prop_assert_eq!(LinRgba::transparent().over(a), a);
+            prop_assert_eq!(a.compose(LinRgba::transparent()), a);
+            prop_assert_eq!(LinRgba::transparent().compose(a), a);
         }
 
         #[test]
         fn over_opaque_foreground(rgb: LinRgb8, dst: LinRgba8) {
             let fg: LinRgba8 = rgb.into();
-            prop_assert_eq!(fg.over(dst), fg);
+            prop_assert_eq!(fg.compose(dst), fg);
         }
 
         #[test]
         fn over_preserves_premult(a: LinRgba8, b: LinRgba8) {
-            prop_assert!(a.over(b).valid_premult());
+            prop_assert!(a.compose(b).valid_premult());
         }
 
         #[test]
