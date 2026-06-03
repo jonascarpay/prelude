@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc e15eeab308936d50af263580ec2acb8dd249149af8b1ba48111ccf4037b0c5de # shrinks to domain_start = Ratio { p: 0, q: 1 }, domain_end = Ratio { p: -1, q: 1 }, range_start = Ratio { p: 0, q: 1 }, range_end = Ratio { p: -1, q: 1 }
+cc 50906b2575cef8380e204d1f19bb349eadb85301e4f5be36bd2ac55f1ce72c06 # shrinks to domain_start = Ratio { p: -1, q: 6 }, domain_end = Ratio { p: 950, q: 253 }, range_start = Ratio { p: -554, q: 523 }, range_end = Ratio { p: 41, q: 948 }

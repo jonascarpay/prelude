@@ -79,17 +79,19 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
                 let size = view.size();
-                let to_ndc = v2(
-                    remap(0. ..size.x as f64, -1. ..1.), //
-                    remap(0. ..size.y as f64, 1. ..-1.), //
-                );
+
                 let ndc_to_screen = remap2(v2(-1., 1.)..v2(1., -1.), v2(0., 0.)..v2(size.x as f64, size.y as f64));
+
+                dbg!(ndc_to_screen.evaluate(v2(-1., 1.)));
+
+                // dbg!(ndc_to_screen);
                 let screen_to_ndc = ndc_to_screen.inverse();
-                // Define the ray in resolution-independent NDC, then map to pixels.
-                let from_ndc = |x: f32, y: f32| {
-                    let p = to_screen.evaluate(v2(x, y));
-                    v2(p.x as usize, p.y as usize)
-                };
+                let ndc_to_screen = |v| ndc_to_screen.evaluate(v).map(|s| s as usize);
+
+                let p = ndc_to_screen(v2(0., 0.));
+                // dbg!(p);
+                *view.get_mut(p) = 0xFFFFFFFF;
+                /*
                 let mut ray: Ray2D<usize> = plot_ray2d(from_ndc(-0.9, -0.9), from_ndc(0.6, 0.3));
                 for _ in 0..10000 {
                     let p = ray.step();
@@ -105,6 +107,7 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                         ray.reflect_in_x();
                     }
                 }
+                */
                 buf.present().expect("Error presenting buffer");
             }
             _ => {

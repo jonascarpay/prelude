@@ -6,7 +6,8 @@ use crate::algebra::{
 };
 
 use super::super::abstract_::{
-    field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
+    field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve,
+    Ring, VectorSpace,
 };
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
@@ -23,6 +24,7 @@ pub fn lerp<T: Additive>(zero: T, one: T) -> Linear<T> {
     }
 }
 
+/*
 pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     let xa = from.start;
     let xb = from.end;
@@ -33,6 +35,22 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     Linear {
         c1: yb.minus(ya.clone()).mult(inv),
         c0: ya.minus(xa),
+    }
+}
+*/
+
+pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
+    let xa = from.start;
+    let xb = from.end;
+    let ya = to.start;
+    let yb = to.end;
+    let dy = yb.minus(ya.clone());
+    let dx = xb.minus(xa.clone());
+    let c = dy.div(dx);
+    // equivalently: lerp(ya, yb).compose(lerp(xa, xb).inverse())
+    Linear {
+        c1: c.clone(),
+        c0: ya.minus(xa.mult(c)),
     }
 }
 
@@ -135,5 +153,53 @@ impl<T: Ring + Copy> DifferentiableCurve for Linear<T> {
 impl<T: Additive> From<T> for Linear<T> {
     fn from(c0: T) -> Self {
         Linear { c0, ..Self::zero() }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::algebra::numeric::rational::proptest_impls::gen_ratio;
+
+    use super::*;
+    use proptest::prelude::*;
+
+    proptest! {
+        #[test]
+        fn lerp_0_is_start(start: i32, end: i32) {
+            prop_assert_eq!(lerp(start, end).evaluate(0), start);
+        }
+
+        #[test]
+        fn lerp_1_is_end(start: i32, end: i32) {
+            prop_assert_eq!(lerp(start, end).evaluate(1), end);
+        }
+
+        #[test]
+        fn remap_remaps_start(
+            domain_start in gen_ratio(),
+            domain_end in gen_ratio(),
+            range_start in gen_ratio(),
+            range_end in gen_ratio()
+        ) {
+            prop_assume!(domain_start != domain_end);
+            prop_assert_eq!(
+                remap(domain_start..domain_end, range_start..range_end).evaluate(domain_start),
+                range_start
+            )
+        }
+
+        #[test]
+        fn remap_remaps_end(
+            domain_start in gen_ratio(),
+            domain_end in gen_ratio(),
+            range_start in gen_ratio(),
+            range_end in gen_ratio()
+        ) {
+            prop_assume!(domain_start != domain_end);
+            prop_assert_eq!(
+                remap(domain_start..domain_end, range_start..range_end).evaluate(domain_end),
+                range_end
+            )
+        }
     }
 }

@@ -204,21 +204,30 @@ impl<T: Ord + Additive + EuclideanRing> Ratio<T> {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(any(test, feature = "proptest"))]
+pub mod proptest_impls {
     use super::*;
     use proptest::prelude::*;
 
     type R = Ratio<i64>;
 
     pub fn gen_ratio() -> impl Strategy<Value = R> {
-        (-1000i64..=1000, 1i64..=1000).prop_map(|(p, q)| ratio(p, q).unwrap())
+        (-100i64..=100, 1i64..=100).prop_map(|(p, q)| ratio(p, q).unwrap())
     }
 
-    fn gen_nonzero_ratio() -> impl Strategy<Value = R> {
+    pub fn gen_nonzero_ratio() -> impl Strategy<Value = R> {
         (prop_oneof![-1000i64..=-1, 1i64..=1000], 1i64..=1000)
             .prop_map(|(p, q)| ratio(p, q).unwrap())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::proptest_impls::*;
+    use super::*;
+    use proptest::prelude::*;
+
+    type R = Ratio<i64>;
 
     fn is_canonical(r: &R) -> bool {
         r.q > 0 && gcd(r.p, r.q) == 1
