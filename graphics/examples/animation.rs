@@ -3,9 +3,9 @@ use std::{num::NonZeroU32, rc::Rc};
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
     algebra::{
-        abstract_::Curve,
+        abstract_::{Curve, Group},
         geometric::vec2::{v2, V2},
-        polynomial::linear::{remap, Linear},
+        polynomial::linear::{remap, remap2, Linear},
     },
     plot::ray::{plot_ray2d, Ray2D},
 };
@@ -83,8 +83,8 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                     remap(0. ..size.x as f64, -1. ..1.), //
                     remap(0. ..size.y as f64, 1. ..-1.), //
                 );
-                // TODO Group so we can do .inverse here
-                let to_screen = ndc_to_screen(size.x as f32, size.y as f32);
+                let ndc_to_screen = remap2(v2(-1., 1.)..v2(1., -1.), v2(0., 0.)..v2(size.x as f64, size.y as f64));
+                let screen_to_ndc = ndc_to_screen.inverse();
                 // Define the ray in resolution-independent NDC, then map to pixels.
                 let from_ndc = |x: f32, y: f32| {
                     let p = to_screen.evaluate(v2(x, y));

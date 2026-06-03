@@ -1,5 +1,5 @@
 use crate::algebra::{
-    abstract_::InnerProductSpace,
+    abstract_::{Group, InnerProductSpace, Monoid, Semigroup},
     geometric::{
         complex::Complex,
         vec3::{v3, V3},
@@ -120,6 +120,24 @@ impl<T: Ring + Clone> InnerProductSpace for V2<T> {
 
     fn inner(self, rhs: Self) -> Self::Scalar {
         self.x.mult(rhs.x).plus(self.y.mult(rhs.y))
+    }
+}
+
+impl<T: Semigroup> Semigroup for V2<T> {
+    fn compose(self, rhs: Self) -> Self {
+        v2(self.x.compose(rhs.x), self.y.compose(rhs.y))
+    }
+}
+
+impl<T: Monoid> Monoid for V2<T> {
+    fn identity() -> Self {
+        v2(T::identity(), T::identity())
+    }
+}
+
+impl<T: Group> Group for V2<T> {
+    fn inverse(self) -> Self {
+        v2(self.x.inverse(), self.y.inverse())
     }
 }
 

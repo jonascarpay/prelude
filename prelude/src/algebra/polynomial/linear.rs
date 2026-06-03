@@ -1,6 +1,9 @@
 use std::ops::Range;
 
-use crate::algebra::abstract_::group::{Group, Monoid, Semigroup};
+use crate::algebra::{
+    abstract_::group::{Group, Monoid, Semigroup},
+    v2, V2,
+};
 
 use super::super::abstract_::{
     field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
@@ -31,6 +34,14 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
         c1: yb.minus(ya.clone()).mult(inv),
         c0: ya.minus(xa),
     }
+}
+
+// This is really just zipping, might be worth generalizing.
+pub fn remap2<T: Field>(from: Range<V2<T>>, to: Range<V2<T>>) -> V2<Linear<T>> {
+    v2(
+        remap(from.start.x..from.end.x, to.start.x..to.end.x),
+        remap(from.start.y..from.end.y, to.start.y..to.end.y),
+    )
 }
 
 impl<T: Ring> Semigroup for Linear<T> {
