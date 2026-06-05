@@ -109,6 +109,40 @@ pub fn iter_sum_reduce<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
     iter.reduce(T::plus).unwrap_or(T::zero())
 }
 
+pub fn step_by<T>(start: T, delta: T) -> ArithmeticSequence<T> {
+    ArithmeticSequence::new(start, delta)
+}
+
+pub fn step_by_until<T: Additive + PartialOrd + Copy>(
+    start: T,
+    delta: T,
+    end: T,
+) -> impl Iterator<Item = T> {
+    ArithmeticSequence::new(start, delta).take_while(move |v| *v < end)
+}
+
+pub struct ArithmeticSequence<T> {
+    pub next: T,
+    pub delta: T,
+}
+
+impl<T> ArithmeticSequence<T> {
+    pub fn new(start: T, delta: T) -> Self {
+        ArithmeticSequence { next: start, delta }
+    }
+}
+
+impl<T: Additive> Iterator for ArithmeticSequence<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<T> {
+        let next = self.next.clone();
+        self.next.incr_by(self.delta.clone());
+        Some(next)
+    }
+}
+
+// impls //
+
 impl Additive for () {
     fn plus(self, _rhs: Self) -> Self {}
     fn zero() -> Self {}

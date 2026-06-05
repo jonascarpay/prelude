@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::algebra::{
     abstract_::{Group, InnerProductSpace, Monoid, Semigroup},
     geometric::{
@@ -6,7 +8,9 @@ use crate::algebra::{
     },
 };
 
-use super::super::abstract_::{impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace};
+use super::super::abstract_::{
+    impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 // TODO Rename to Vec2
@@ -60,6 +64,11 @@ impl<T> V2<T> {
             y: self.y.into(),
         }
     }
+    pub fn map_try_into<Out: TryFrom<T>>(self) -> Result<V2<Out>, Out::Error> {
+        let x = self.x.try_into()?;
+        let y = self.y.try_into()?;
+        Ok(V2 { x, y })
+    }
     pub fn pack(self) -> [T; 2] {
         [self.x, self.y]
     }
@@ -69,6 +78,14 @@ impl<T> V2<T> {
     pub fn pad(self, z: T) -> V3<T> {
         let V2 { x, y } = self;
         v3(x, y, z)
+    }
+
+    pub fn in_bounds(self, bounds: Range<V2<T>>) -> bool
+    where
+        T: PartialOrd,
+    {
+        (bounds.start.x <= self.x && self.x < bounds.end.x)
+            && (bounds.start.y <= self.y && self.y < bounds.end.y)
     }
 }
 

@@ -1,11 +1,17 @@
-use std::{num::NonZeroU32, rc::Rc};
+use std::{num::NonZeroU32, ops::Range, rc::Rc};
 
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
     algebra::{
-        abstract_::{Curve, Group},
+        abstract_::{
+            additive::{step_by, step_by_until},
+            Additive, Curve, Group,
+        },
         geometric::vec2::{v2, V2},
-        polynomial::linear::{remap, remap2, Linear},
+        polynomial::{
+            cubic::Cubic,
+            linear::{remap, remap2, Linear},
+        },
     },
     plot::ray::{plot_ray2d, Ray2D},
 };
@@ -20,7 +26,16 @@ use winit::{
 /// coordinates (`-1..1`, y-up). The map is axis-separable, so it's a `Linear`
 /// per axis (`ndc = c1·coord + c0`); the y axis is flipped via a negative slope.
 fn screen_to_ndc(w: f32, h: f32) -> V2<Linear<f32>> {
-    v2(Linear { c1: 2.0 / w, c0: -1.0 }, Linear { c1: -2.0 / h, c0: 1.0 })
+    v2(
+        Linear {
+            c1: 2.0 / w,
+            c0: -1.0,
+        },
+        Linear {
+            c1: -2.0 / h,
+            c0: 1.0,
+        },
+    )
 }
 
 /// Inverse of [`screen_to_ndc`]: maps NDC (`-1..1`, y-up) back to buffer pixel
@@ -51,7 +66,9 @@ impl<D> App<D> {
 
 impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = event_loop.create_window(Window::default_attributes()).unwrap();
+        let window = event_loop
+            .create_window(Window::default_attributes())
+            .unwrap();
         let window = Rc::new(window);
         let surf = sb::Surface::new(&self.context, window.clone()).unwrap();
         self.surface_context = Some(SurfaceContext {
@@ -69,28 +86,52 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
         use winit::{dpi::PhysicalSize, event::WindowEvent::*};
         match event {
             Resized(PhysicalSize { width, height }) => {
-                let sctx = self.surface_context.as_mut().expect("Resize without surface context");
+                let sctx = self
+                    .surface_context
+                    .as_mut()
+                    .expect("Resize without surface context");
                 let width = NonZeroU32::new(width).expect("Zero surface width");
                 let height = NonZeroU32::new(height).expect("Zero surface height");
-                sctx.surface.resize(width, height).expect("Error while resizing");
+                sctx.surface
+                    .resize(width, height)
+                    .expect("Error while resizing");
             }
             RedrawRequested => {
-                let sctx = self.surface_context.as_mut().expect("Redraw without surface context");
+                let sctx = self
+                    .surface_context
+                    .as_mut()
+                    .expect("Redraw without surface context");
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
                 let size = view.size();
+                let size_f: V2<f64> = v2(size.x as f64, size.y as f64);
 
-                let ndc_to_screen = remap2(v2(-1., 1.)..v2(1., -1.), v2(0., 0.)..v2(size.x as f64, size.y as f64));
+                let ndc_to_screen_map = remap2(
+                    v2(-1., 1.)..v2(1., -1.),
+                    v2(0., 0.)..v2(size.x as f64, size.y as f64),
+                );
+                let screen_to_ndc_map = ndc_to_screen_map.inverse();
 
-                dbg!(ndc_to_screen.evaluate(v2(-1., 1.)));
+                let clip = v2(0f64, 0.)..size_f;
 
-                // dbg!(ndc_to_screen);
-                let screen_to_ndc = ndc_to_screen.inverse();
-                let ndc_to_screen = |v| ndc_to_screen.evaluate(v).map(|s| s as usize);
+                let mut draw = |x: V2<f64>| {
+                    let v = ndc_to_screen_map.evaluate(x);
+                    dbg!(x, v, ndc_to_screen_map.evaluate(x));
+                    if v.in_bounds(V2::zero()..size_f) {
+                        *view.get_mut(v2(v.x as usize, v.y as usize)) = 0x00FFFFFF;
+                    }
+                };
 
-                let p = ndc_to_screen(v2(0., 0.));
-                // dbg!(p);
-                *view.get_mut(p) = 0xFFFFFFFF;
+                let curve1: Cubic<f64> = Cubic::x3() + Cubic::x2();
+                let curve2: Cubic<f64> = Cubic::x3();
+                let curve3: Cubic<f64> = Cubic::from_roots(1., -0.5, 0., 0.5);
+
+                for x in step_by_until(-1., 0.001, 1.) {
+                    draw(v2(x, curve1.evaluate(x)));
+                    draw(v2(x, curve2.evaluate(x)));
+                    draw(v2(x, curve3.evaluate(x)));
+                }
+
                 /*
                 let mut ray: Ray2D<usize> = plot_ray2d(from_ndc(-0.9, -0.9), from_ndc(0.6, 0.3));
                 for _ in 0..10000 {

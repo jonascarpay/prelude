@@ -1,7 +1,8 @@
 use crate::algebra::polynomial::spline::Spline;
 
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
+    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
+    VectorSpace,
 };
 use super::linear::Linear;
 use super::quadratic::Quadratic;
@@ -13,6 +14,48 @@ pub struct Cubic<T> {
     pub c1: T,
     pub c2: T,
     pub c3: T,
+}
+
+impl<T: Ring> Cubic<T> {
+    pub fn x3() -> Self {
+        Cubic {
+            c3: T::one(),
+            ..Self::zero()
+        }
+    }
+    pub fn x2() -> Self {
+        Cubic {
+            c3: T::one(),
+            ..Self::zero()
+        }
+    }
+    pub fn x1() -> Self {
+        Cubic {
+            c1: T::one(),
+            ..Self::zero()
+        }
+    }
+
+    /// Construct a cubic from the factored from `a(x - r1)(x - r2)(x - r3)`
+    pub fn from_roots(a: T, r1: T, r2: T, r3: T) -> Self
+    where
+        T: Copy, // TODO Clone
+    {
+        // a(x - r1)(x - r2)(x - r3)
+        // a(x - r1)(x^2 - r2 x - r3 x + r2 r3)
+        // ax^3 - a r2 x^2 - a r3 x^2 + a r2 r3 x - a r1 x^2 + a r1 r2 x + a r1 r3 x - a r1 r2 r3
+        //
+        // a x^3
+        // a (- r1 - r2 - r3) x^2
+        // a (r2 r3 + a r1 r2 + a r1 r3) x
+        // a (- r1 r2 r3)
+        Cubic {
+            c0: r1.mult(r2).mult(r3).negate(),
+            c1: (r1.mult(r2).plus(r2.mult(r3)).plus(r1.mult(r3))),
+            c2: (r1.negate().minus(r2).minus(r3).mult(a)),
+            c3: a,
+        }
+    }
 }
 
 impl<T: Additive> Additive for Cubic<T> {

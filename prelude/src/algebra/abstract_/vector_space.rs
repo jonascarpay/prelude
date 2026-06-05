@@ -68,8 +68,35 @@ where
 
     fn scale(self, s: Self::Scalar) -> Self {
         let (a, b, c, d) = self;
-        (a.scale(s.clone()), b.scale(s.clone()), c.scale(s.clone()), d.scale(s))
+        (
+            a.scale(s.clone()),
+            b.scale(s.clone()),
+            c.scale(s.clone()),
+            d.scale(s),
+        )
     }
+}
+
+impl<R, const N: usize> VectorSpace for [R; N]
+where
+    R: Ring + Clone,
+{
+    type Scalar = R;
+
+    fn scale(self, c: Self::Scalar) -> Self {
+        self.map(|x| x.mult(c.clone()))
+    }
+}
+
+macro_rules! impl_trivial_vector_space {
+    ($t:ty) => {
+        impl VectorSpace for $t {
+            type Scalar = $t;
+            fn scale(self, s: Self) -> Self {
+                self.mult(s)
+            }
+        }
+    };
 }
 
 /// Emit `Mul<Self::Scalar>` impl that forwards to `VectorSpace::scale`.
@@ -126,13 +153,17 @@ macro_rules! impl_vector_space_ops {
     };
 }
 
-impl<R, const N: usize> VectorSpace for [R; N]
-where
-    R: Ring + Clone,
-{
-    type Scalar = R;
-
-    fn scale(self, c: Self::Scalar) -> Self {
-        self.map(|x| x.mult(c.clone()))
-    }
-}
+impl_trivial_vector_space!(i8);
+impl_trivial_vector_space!(i16);
+impl_trivial_vector_space!(i32);
+impl_trivial_vector_space!(i64);
+impl_trivial_vector_space!(i128);
+impl_trivial_vector_space!(isize);
+impl_trivial_vector_space!(u8);
+impl_trivial_vector_space!(u16);
+impl_trivial_vector_space!(u32);
+impl_trivial_vector_space!(u64);
+impl_trivial_vector_space!(u128);
+impl_trivial_vector_space!(usize);
+impl_trivial_vector_space!(f32);
+impl_trivial_vector_space!(f64);

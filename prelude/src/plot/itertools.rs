@@ -6,7 +6,11 @@ pub struct StopsAt<I: Iterator> {
 
 impl<I: Iterator> StopsAt<I> {
     pub fn new(iter: I, end: I::Item) -> Self {
-        Self { iter, end, done: false }
+        Self {
+            iter,
+            end,
+            done: false,
+        }
     }
 }
 impl<I> Iterator for StopsAt<I>
@@ -36,7 +40,11 @@ pub struct StopsBefore<I: Iterator> {
 
 impl<I: Iterator> StopsBefore<I> {
     pub fn new(iter: I, end: I::Item) -> Self {
-        Self { iter, end, done: false }
+        Self {
+            iter,
+            end,
+            done: false,
+        }
     }
 }
 
