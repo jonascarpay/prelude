@@ -68,3 +68,42 @@ where
         }
     }
 }
+
+// Bigrams //
+
+pub fn bigrams<I: Iterator>(iter: I) -> Bigrams<I> {
+    Bigrams { buf: None, iter }
+}
+
+pub struct Bigrams<I: Iterator> {
+    buf: Option<I::Item>,
+    iter: I,
+}
+
+impl<I: Iterator> Iterator for Bigrams<I>
+where
+    I::Item: Clone,
+{
+    type Item = (I::Item, I::Item);
+    fn next(&mut self) -> Option<Self::Item> {
+        match &self.buf {
+            None => {
+                self.buf = self.iter.next();
+                if self.buf.is_some() {
+                    self.next()
+                } else {
+                    None
+                }
+            }
+            Some(b) => {
+                if let Some(h) = self.iter.next() {
+                    let r = (b.clone(), h.clone());
+                    self.buf = Some(h);
+                    Some(r)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}

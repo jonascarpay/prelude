@@ -1,7 +1,8 @@
-use std::ops::{Shl, Shr};
-
 use crate::{
-    algebra::abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
+    algebra::{
+        abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
+        numeric::fixed_base::FixedBase,
+    },
     impl_additive_ops, impl_ring_ops, impl_vector_space_ops,
 };
 
@@ -69,7 +70,9 @@ impl<T: Additive, const FRAC_BITS: u32> Additive for Fixed<T, FRAC_BITS> {
     }
 
     fn negate(self) -> Self {
-        Fixed { raw: self.raw.negate() }
+        Fixed {
+            raw: self.raw.negate(),
+        }
     }
 
     fn minus(self, rhs: Self) -> Self {
@@ -79,23 +82,11 @@ impl<T: Additive, const FRAC_BITS: u32> Additive for Fixed<T, FRAC_BITS> {
     }
 }
 
-impl<T: Ring, const FRAC_BITS: u32> VectorSpace for Fixed<T, FRAC_BITS> {
-    type Scalar = T;
-    fn scale(self, c: T) -> Self {
-        Fixed { raw: self.raw.mult(c) }
+impl<T: FixedBase, const FRAC_BITS: u32> VectorSpace for Fixed<T, FRAC_BITS> {
+    type Scalar = Self;
+    fn scale(self, c: Self) -> Self {
+        self.mult(c)
     }
-}
-
-pub trait FixedBase: Ring + Shl<u32, Output = Self> + Shr<u32, Output = Self> {
-    type Wide: EuclideanRing + Shl<u32, Output = Self::Wide> + Shr<u32, Output = Self::Wide>;
-    const MIN: Self;
-    const MAX: Self;
-    const ZERO: Self;
-    const ONE: Self;
-    fn widen(self) -> Self::Wide;
-    fn narrow(wide: Self::Wide) -> Self;
-    fn from_f64(x: f64) -> Self;
-    fn to_f64(self) -> f64;
 }
 
 impl<T: FixedBase, const FRAC_BITS: u32> Ring for Fixed<T, FRAC_BITS> {
@@ -137,42 +128,8 @@ impl<T: FixedBase, const FRAC_BITS: u32> Field for Fixed<T, FRAC_BITS> {
     }
 }
 
-macro_rules! impl_fixed_base {
-    ($narrow:ty, $wide:ty) => {
-        impl FixedBase for $narrow {
-            type Wide = $wide;
-            const MIN: Self = <$narrow>::MIN;
-            const MAX: Self = <$narrow>::MAX;
-            const ZERO: Self = 0;
-            const ONE: Self = 1;
-            fn widen(self) -> $wide {
-                self as $wide
-            }
-            fn narrow(wide: $wide) -> $narrow {
-                wide as $narrow
-            }
-            fn from_f64(x: f64) -> Self {
-                x as $narrow
-            }
-            fn to_f64(self) -> f64 {
-                self as f64
-            }
-        }
-    };
-}
-
-impl_fixed_base!(u8, u16);
-impl_fixed_base!(u16, u32);
-impl_fixed_base!(u32, u64);
-impl_fixed_base!(u64, u128);
-impl_fixed_base!(i8, i16);
-impl_fixed_base!(i16, i32);
-impl_fixed_base!(i32, i64);
-impl_fixed_base!(i64, i128);
-
 impl_additive_ops!([T: Additive, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
 impl_ring_ops!([T: FixedBase, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
-impl_vector_space_ops!([T: Ring, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
 
 #[cfg(test)]
 mod tests {

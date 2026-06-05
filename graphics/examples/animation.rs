@@ -1,19 +1,18 @@
-use std::{num::NonZeroU32, ops::Range, rc::Rc};
+use std::{num::NonZeroU32, rc::Rc};
 
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
     algebra::{
-        abstract_::{
-            additive::{step_by, step_by_until},
-            Additive, Curve, Group,
-        },
+        abstract_::{additive::step_by_until, Additive, Curve, Group, VectorSpace},
         geometric::vec2::{v2, V2},
+        numeric::fixed::Fixed,
         polynomial::{
-            cubic::Cubic,
-            linear::{remap, remap2, Linear},
+            cubic::{self, Cubic},
+            linear::{remap2, Linear},
         },
+        Ring,
     },
-    plot::ray::{plot_ray2d, Ray2D},
+    plot::{itertools::bigrams, line::plot_line2d},
 };
 use softbuffer as sb;
 use winit::{
@@ -104,51 +103,59 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let mut buf = sctx.surface.buffer_mut().unwrap();
                 let mut view = Buffer2DView::from_softbuffer(&mut buf);
                 let size = view.size();
-                let size_f: V2<f64> = v2(size.x as f64, size.y as f64);
 
-                let ndc_to_screen_map = remap2(
-                    v2(-1., 1.)..v2(1., -1.),
-                    v2(0., 0.)..v2(size.x as f64, size.y as f64),
+                type R = Fixed<i64, 8>;
+                let one = R::one();
+                let zero = R::zero();
+                fn r(x: f64) -> R {
+                    R::from_f64(x)
+                }
+                fn vu(x: V2<R>) -> V2<usize> {
+                    v2(x.x.trunc() as usize, x.y.trunc() as usize)
+                }
+
+                let size_f: V2<R> = v2(
+                    R::from_integer(size.x as isize),
+                    R::from_integer(size.y as isize),
                 );
+
+                let ndc_to_screen_map =
+                    remap2(v2(-one, one)..v2(one, -one), v2(zero, zero)..size_f);
                 let screen_to_ndc_map = ndc_to_screen_map.inverse();
 
-                let clip = v2(0f64, 0.)..size_f;
+                let clip = v2(zero, zero)..size_f;
 
-                let mut draw = |x: V2<f64>| {
-                    let v = ndc_to_screen_map.evaluate(x);
-                    dbg!(x, v, ndc_to_screen_map.evaluate(x));
-                    if v.in_bounds(V2::zero()..size_f) {
-                        *view.get_mut(v2(v.x as usize, v.y as usize)) = 0x00FFFFFF;
+                let mut draw_line = |start: V2<R>, end: V2<R>| {
+                    let start = ndc_to_screen_map.evaluate(start);
+                    let end = ndc_to_screen_map.evaluate(end);
+                    if start.in_bounds(V2::zero()..size_f) && end.in_bounds(V2::zero()..size_f) {
+                        for p in plot_line2d(vu(start), vu(end)) {
+                            *view.get_mut(p) = 0x00FFFFFF;
+                        }
                     }
                 };
 
-                let curve1: Cubic<f64> = Cubic::x3() + Cubic::x2();
-                let curve2: Cubic<f64> = Cubic::x3();
-                let curve3: Cubic<f64> = Cubic::from_roots(1., -0.5, 0., 0.5);
+                let x0: Cubic<R> = Cubic::x0();
+                let x1: Cubic<R> = Cubic::x1();
+                let x2: Cubic<R> = Cubic::x2();
+                let x3: Cubic<R> = Cubic::x3();
+                let curves = [
+                    x0,
+                    x1,
+                    x2,
+                    x3,
+                    Cubic::from_roots(one, -r(0.5), r(0.), r(0.5)),
+                    Cubic::from_roots(one, -r(0.5), r(0.), r(0.5)) + x0 * R::EPSILON,
+                ];
 
-                for x in step_by_until(-1., 0.001, 1.) {
-                    draw(v2(x, curve1.evaluate(x)));
-                    draw(v2(x, curve2.evaluate(x)));
-                    draw(v2(x, curve3.evaluate(x)));
-                }
-
-                /*
-                let mut ray: Ray2D<usize> = plot_ray2d(from_ndc(-0.9, -0.9), from_ndc(0.6, 0.3));
-                for _ in 0..10000 {
-                    let p = ray.step();
-                    *view.get_mut(p.map(|i| i as usize)) = 0xFFFFFFFF;
-                    let n = ray.peek();
-                    // Bounce off the screen edges, expressed in NDC: the walls are
-                    // at |x| = 1 and |y| = 1 regardless of resolution.
-                    let ndc = to_ndc.evaluate(v2(n.x as f32, n.y as f32));
-                    if ndc.x.abs() >= 1.0 {
-                        ray.reflect_in_y();
-                    }
-                    if ndc.y.abs() >= 1.0 {
-                        ray.reflect_in_x();
+                for (xa, xb) in bigrams(step_by_until(-one, R::EPSILON, one)) {
+                    for curve in curves {
+                        let va = v2(xa, curve.evaluate(xa));
+                        let vb = v2(xb, curve.evaluate(xb));
+                        draw_line(va, vb);
                     }
                 }
-                */
+
                 buf.present().expect("Error presenting buffer");
             }
             _ => {

@@ -25,13 +25,19 @@ impl<T: Ring> Cubic<T> {
     }
     pub fn x2() -> Self {
         Cubic {
-            c3: T::one(),
+            c2: T::one(),
             ..Self::zero()
         }
     }
     pub fn x1() -> Self {
         Cubic {
             c1: T::one(),
+            ..Self::zero()
+        }
+    }
+    pub fn x0() -> Self {
+        Cubic {
+            c0: T::one(),
             ..Self::zero()
         }
     }

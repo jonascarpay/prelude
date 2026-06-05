@@ -88,6 +88,7 @@ where
     }
 }
 
+#[macro_export]
 macro_rules! impl_trivial_vector_space {
     ($t:ty) => {
         impl VectorSpace for $t {
