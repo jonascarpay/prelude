@@ -70,6 +70,14 @@ pub trait OrderedAdditive: Ord + Additive {
     fn is_nonnegative(&self) -> bool {
         self.cmp_zero().is_ge()
     }
+
+    fn abs(self) -> Self {
+        if self.is_negative() {
+            self.negate()
+        } else {
+            self
+        }
+    }
 }
 
 impl<T: Eq + Additive> EqAdditive for T {}

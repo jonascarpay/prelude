@@ -1,3 +1,5 @@
+use crate::algebra::abstract_::additive::OrderedAdditive;
+
 use super::ring::Ring;
 
 /// A (commutative) ring with a division-with-remainder operation.
@@ -13,8 +15,11 @@ pub trait EuclideanRing: Ring + Sized {
     fn checked_rem_euclid(self, rhs: Self) -> Option<Self>;
 }
 
-/// Greatest common divisor via the Euclidean algorithm.
+/// Greatest common divisor via the Euclidean algorithm, i.e. the intersection of their prime
+/// factors.
+/// Zero when both inputs are, positive otherwise.
 /// `gcd(0, 0) == 0`.
+/// `gcd(0, a) == a.abs()`.
 ///
 // TODO: might be worth making a trait method, since bignums might want to override with binary gcd
 pub fn gcd<T: EuclideanRing + Ord>(mut a: T, mut b: T) -> T {
@@ -23,11 +28,22 @@ pub fn gcd<T: EuclideanRing + Ord>(mut a: T, mut b: T) -> T {
         a = b;
         b = r;
     }
-    if a < T::zero() {
-        a.negate()
-    } else {
-        a
+    a.abs()
+}
+
+/// Least common multiple via the Euclidean algorithm, i.e. the union of their prime factors.
+/// Always nonnegative.
+/// Zero when at least one input is, positive otherwise.
+/// `lcm(0, 0) == 0`.
+/// `lcm(0, a) == 0`.
+pub fn lcm<T: EuclideanRing + Ord>(a: T, b: T) -> T {
+    if a == T::zero() || b == T::zero() {
+        return T::zero();
     }
+    // Divide before multiplying to keep the intermediate small; `gcd` divides `a`
+    // exactly, so the quotient is exact regardless of rounding direction.
+    let g = gcd(a.clone(), b.clone());
+    a.div_euclid(g).mult(b).abs()
 }
 
 macro_rules! impl_euclidean_ring {
@@ -73,12 +89,22 @@ mod tests {
 
     #[test]
     fn known_gcds() {
-        // assert_eq!(gcd(0, 0), 0);
-        // assert_eq!(gcd(0, 9), 1);
-        // assert_eq!(gcd(0, 1), 1);
+        assert_eq!(gcd(0, 0), 0);
+        assert_eq!(gcd(0, 9), 9);
+        assert_eq!(gcd(0, 1), 1);
         assert_eq!(gcd(6, 15), 3);
         assert_eq!(gcd(6, 8), 2);
         assert_eq!(gcd(12, 20), 4);
+    }
+
+    #[test]
+    fn known_lcms() {
+        assert_eq!(lcm(0, 0), 0);
+        assert_eq!(lcm(0, 9), 0);
+        assert_eq!(lcm(6, 15), 30);
+        assert_eq!(lcm(6, 8), 24);
+        assert_eq!(lcm(12, 20), 60);
+        assert_eq!(lcm(-4, 6), 12);
     }
 
     proptest! {
@@ -111,6 +137,37 @@ mod tests {
         #[test]
         fn gcd_zero_is_abs(a: i32) {
             prop_assert_eq!(gcd(0, a), a.abs());
+        }
+
+        #[test]
+        fn lcm_commutative(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid overflow near boundaries */
+            prop_assert_eq!(lcm(a, b), lcm(b, a));
+        }
+
+        #[test]
+        fn lcm_is_nonnegative(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid overflow near boundaries */
+            prop_assert!(lcm(a, b) >= 0);
+        }
+
+        #[test]
+        fn lcm_is_multiple_of_both(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid overflow near boundaries */
+            let l = lcm(a, b);
+            if a != 0 {
+                prop_assert_eq!(l % a, 0);
+            }
+            if b != 0 {
+                prop_assert_eq!(l % b, 0);
+            }
+        }
+
+        #[test]
+        fn gcd_lcm_product(a: i32, b: i32) {
+            let (a, b) = (a as i64, b as i64); /* upcast to avoid overflow near boundaries */
+            // gcd(a, b) * lcm(a, b) == |a * b|
+            prop_assert_eq!(gcd(a, b) * lcm(a, b), (a * b).abs());
         }
     }
 }

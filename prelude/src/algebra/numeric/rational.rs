@@ -39,9 +39,7 @@ impl<T> Ratio<T> {
 
 impl<T: EuclideanRing + Ord> Additive for Ratio<T> {
     fn plus(self, rhs: Self) -> Self {
-        // (pa / qa) + (pb / qb), combined over lcm(qa, qb) rather than qa*qb so
-        // the intermediate denominator stays as small as possible.
-        //   lcm = qa/g * qb,  p = pa*(qb/g) + pb*(qa/g)   where g = gcd(qa, qb)
+        // (pa / qa) + (pb / qb), combined over lcm(qa, qb) rather than qa*qb so the intermediate denominator stays as small.
         let Ratio { p: pa, q: qa } = self;
         let Ratio { p: pb, q: qb } = rhs;
         let g = gcd(qa.clone(), qb.clone());
@@ -49,8 +47,7 @@ impl<T: EuclideanRing + Ord> Additive for Ratio<T> {
         let p = pa
             .mult(qb.div_euclid(g.clone()))
             .plus(pb.mult(qa.div_euclid(g)));
-        // p and lcm can still share a factor (dividing g), so a final reduce is
-        // needed — but it operates on lcm, not the full qa*qb product.
+        // p and lcm can still share a factor (dividing g), so still need to reduce
         reduce(p, lcm)
     }
 

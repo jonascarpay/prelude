@@ -3,11 +3,11 @@ use std::{num::NonZeroU32, rc::Rc};
 use graphics::buffer2d::Buffer2DView;
 use prelude::{
     algebra::{
-        abstract_::{additive::step_by_until, Additive, Curve, Group, VectorSpace},
+        abstract_::{additive::step_by_until, field::Field, Additive, Curve, Group, VectorSpace},
         geometric::vec2::{v2, V2},
         numeric::fixed::Fixed,
         polynomial::{
-            cubic::{self, Cubic},
+            cubic::{self, bezier3, Cubic},
             linear::{remap2, Linear},
         },
         Ring,
@@ -106,7 +106,9 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
 
                 type R = Fixed<i64, 8>;
                 let one = R::one();
+                let two = one + one;
                 let zero = R::zero();
+                let half = two.recip();
                 fn r(x: f64) -> R {
                     R::from_f64(x)
                 }
@@ -125,10 +127,20 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
 
                 let clip = v2(zero, zero)..size_f;
 
+                // let mut draw_line = |start: V2<R>, end: V2<R>| {
+                //     let start = ndc_to_screen_map.evaluate(start);
+                //     let end = ndc_to_screen_map.evaluate(end);
+                //     if start.in_bounds(V2::zero()..size_f) && end.in_bounds(V2::zero()..size_f) {
+                //         for p in plot_line2d(vu(start), vu(end)) {
+                //             *view.get_mut(p) = 0x00FFFFFF;
+                //         }
+                //     }
+                // };
                 let mut draw_line = |start: V2<R>, end: V2<R>| {
                     let start = ndc_to_screen_map.evaluate(start);
                     let end = ndc_to_screen_map.evaluate(end);
                     if start.in_bounds(V2::zero()..size_f) && end.in_bounds(V2::zero()..size_f) {
+                        // *view.get_mut(vu(start)) = 0x00FFFFFF;
                         for p in plot_line2d(vu(start), vu(end)) {
                             *view.get_mut(p) = 0x00FFFFFF;
                         }
@@ -140,13 +152,20 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                 let x2: Cubic<R> = Cubic::x2();
                 let x3: Cubic<R> = Cubic::x3();
                 let curves = [
-                    x0,
-                    x1,
-                    x2,
-                    x3,
-                    Cubic::from_roots(one, -r(0.5), r(0.), r(0.5)),
-                    Cubic::from_roots(one, -r(0.5), r(0.), r(0.5)) + x0 * R::EPSILON,
+                    // x0,
+                    // x1,
+                    // x2,
+                    // x3,
+                    Cubic::from_roots(r(2.0), -r(0.5), r(0.), r(0.5)),
+                    // Cubic::from_roots(one, -r(0.5), r(0.), r(0.5)) + x0 * R::EPSILON,
                 ];
+
+                let b = bezier3(
+                    v2(-half, half),
+                    v2(one, one),
+                    v2(-one, -one),
+                    v2(half, -half),
+                );
 
                 for (xa, xb) in bigrams(step_by_until(-one, R::EPSILON, one)) {
                     for curve in curves {
@@ -154,6 +173,9 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                         let vb = v2(xb, curve.evaluate(xb));
                         draw_line(va, vb);
                     }
+                }
+                for (xa, xb) in bigrams(step_by_until(r(-1.0), R::EPSILON, r(2.0))) {
+                    draw_line(b.evaluate(xa), b.evaluate(xb));
                 }
 
                 buf.present().expect("Error presenting buffer");

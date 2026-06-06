@@ -3,7 +3,7 @@ use crate::{
         abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
         numeric::fixed_base::FixedBase,
     },
-    impl_additive_ops, impl_ring_ops, impl_vector_space_ops,
+    impl_additive_ops, impl_ring_ops,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
