@@ -10,8 +10,16 @@ pub trait AsSlice {
     fn as_slice(&self) -> &[Self::Elem];
 }
 
+// TODO there is no real point in having this be separate, I think.
 pub trait AsMutSlice: AsSlice {
     fn as_mut_slice(&mut self) -> &mut [Self::Elem];
+}
+
+impl<T: AsSlice + ?Sized> AsSlice for &T {
+    type Elem = T::Elem;
+    fn as_slice(&self) -> &[T::Elem] {
+        (**self).as_slice()
+    }
 }
 
 impl<T: AsSlice + ?Sized> AsSlice for &mut T {
@@ -27,20 +35,29 @@ impl<T: AsMutSlice + ?Sized> AsMutSlice for &mut T {
     }
 }
 
-fn fits_in(small: Index2D, large: Index2D) -> bool {
+const fn fits_in(small: Index2D, large: Index2D) -> bool {
     small.x <= large.x && small.y <= large.y
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Buffer2D<T> {
-    parent: T,
-    parent_stride: usize,
-    offset: Index2D,
-    size: Index2D,
+    pub(crate) parent: T,
+    pub(crate) parent_stride: usize,
+    pub(crate) offset: Index2D,
+    pub(crate) size: Index2D,
 }
 
 impl<T> Buffer2D<T> {
-    pub fn size(&self) -> Index2D {
+    pub const fn from_packed(parent: T, size: Index2D) -> Self {
+        Buffer2D {
+            parent,
+            parent_stride: size.x,
+            offset: v2(0, 0),
+            size,
+        }
+    }
+
+    pub const fn size(&self) -> Index2D {
         self.size
     }
 
@@ -62,6 +79,10 @@ impl<T> Buffer2D<T> {
 }
 
 impl<T: AsSlice> Buffer2D<T> {
+    pub fn from_packed_checked(parent: T, size: Index2D) -> Option<Self> {
+        (parent.as_slice().len() == size.x * size.y).then(|| Self::from_packed(parent, size))
+    }
+
     fn row(&self, y: usize) -> &[T::Elem] {
         let start = self.row_start(y);
         &self.parent.as_slice()[start..start + self.size.x]
@@ -127,12 +148,7 @@ impl<'a, 'b, D: HasDisplayHandle, W: HasWindowHandle>
     pub fn from_softbuffer(buf: &'a mut softbuffer::Buffer<'b, D, W>) -> Self {
         let w = buf.width().get() as usize;
         let h = buf.height().get() as usize;
-        Buffer2D {
-            parent: buf,
-            parent_stride: w,
-            offset: v2(0, 0),
-            size: v2(w, h),
-        }
+        Buffer2D::from_packed(buf, v2(w, h))
     }
 }
 

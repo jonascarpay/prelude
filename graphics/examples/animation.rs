@@ -3,11 +3,11 @@ use std::{num::NonZeroU32, rc::Rc};
 use graphics::buffer2d::Buffer2D;
 use prelude::{
     algebra::{
-        abstract_::{additive::step_by_until, field::Field, Additive, Curve, Group, VectorSpace},
+        abstract_::{additive::step_by_until, field::Field, Additive, Curve, Group},
         geometric::vec2::{v2, V2},
         numeric::fixed::Fixed,
         polynomial::{
-            cubic::{self, bezier3, Cubic},
+            cubic::{bezier3, Cubic},
             linear::{remap2, Linear},
         },
         Ring,
