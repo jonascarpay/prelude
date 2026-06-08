@@ -1,6 +1,6 @@
 use std::{num::NonZeroU32, rc::Rc};
 
-use graphics::buffer2d::Buffer2DView;
+use graphics::buffer2d::Buffer2D;
 use prelude::{
     algebra::{
         abstract_::{additive::step_by_until, field::Field, Additive, Curve, Group, VectorSpace},
@@ -101,7 +101,7 @@ impl<D: HasDisplayHandle> winit::application::ApplicationHandler for App<D> {
                     .as_mut()
                     .expect("Redraw without surface context");
                 let mut buf = sctx.surface.buffer_mut().unwrap();
-                let mut view = Buffer2DView::from_softbuffer(&mut buf);
+                let mut view = Buffer2D::from_softbuffer(&mut buf);
                 let size = view.size();
 
                 type R = Fixed<i64, 8>;
