@@ -27,6 +27,10 @@ where
     // TODO specify left or right module? Or what side we scale on?
 }
 
+// TODO: There is possible further work here, of affine spaces and convex sets/combinations.
+// This is useful for e.g. colors, that shouldn't leave their gamut.
+// https://en.wikipedia.org/wiki/Convex_combination
+
 impl<R, A, B> VectorSpace for (A, B)
 where
     R: Ring + Clone,
