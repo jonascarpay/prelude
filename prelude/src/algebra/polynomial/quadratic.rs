@@ -1,5 +1,6 @@
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring, VectorSpace,
+    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
+    VectorSpace,
 };
 use super::linear::Linear;
 
@@ -9,6 +10,22 @@ pub struct Quadratic<T> {
     pub c0: T,
     pub c1: T,
     pub c2: T,
+}
+
+impl<T> Quadratic<T> {
+    pub fn from_roots(a: T, r1: T, r2: T) -> Self
+    where
+        T: Ring + Clone,
+    {
+        // a(x - r1)(x - r2)
+        // a(x^2 - r1 x - r2 x + r1 r2)
+        // a x^2 + a (- r1 - r2) x + a r1 r2
+        Quadratic {
+            c0: a.clone().mult(r1.clone()).mult(r2.clone()),
+            c1: a.clone().mult(r1.plus(r2).negate()),
+            c2: a,
+        }
+    }
 }
 
 impl<T: Additive> Additive for Quadratic<T> {
