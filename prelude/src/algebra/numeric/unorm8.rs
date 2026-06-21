@@ -188,17 +188,17 @@ mod tests {
 
     #[test]
     fn encode_lut_matches_powf() {
-        for i in 0..256 {
+        for (i, lut) in ENCODE_LUT.iter().enumerate() {
             let expected = ((i as f64 / 255.0).powf(1.0 / GAMMA) * 255.0).round() as u8;
-            assert_eq!(ENCODE_LUT[i], expected, "mismatch at i={i}");
+            assert_eq!(*lut, expected, "mismatch at i={i}");
         }
     }
 
     #[test]
     fn decode_lut_matches_powf() {
-        for i in 0..256 {
+        for (i, del) in DECODE_LUT.iter().enumerate() {
             let expected = ((i as f64 / 255.0).powf(GAMMA) * 255.0).round() as u8;
-            assert_eq!(DECODE_LUT[i], expected, "mismatch at i={i}");
+            assert_eq!(*del, expected, "mismatch at i={i}");
         }
     }
 }

@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 prelude = { path = "../prelude" }
-softbuffer = "0.4.8"
 winit = "0.30.13"
 
 [dev-dependencies]

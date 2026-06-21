@@ -36,6 +36,12 @@ impl<T: Ring> LinRgb<T> {
     }
 }
 
+impl LinRgb8 {
+    pub fn pack(self) -> [u8; 3] {
+        [self.r.0, self.g.0, self.b.0]
+    }
+}
+
 impl<T: Additive> Additive for LinRgb<T> {
     fn plus(self, rhs: Self) -> Self {
         Self {
