@@ -69,6 +69,13 @@ impl<T> V2<T> {
         (bounds.start.x <= self.x && self.x < bounds.end.x)
             && (bounds.start.y <= self.y && self.y < bounds.end.y)
     }
+
+    pub fn into_complex(self) -> Complex<T> {
+        Complex {
+            s: self.x,
+            xy: self.y,
+        }
+    }
 }
 
 impl<T> Functor for V2<T> {

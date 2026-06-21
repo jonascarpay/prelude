@@ -32,6 +32,15 @@ impl<T: Ring + Clone> Complex<T> {
             xy: self.xy.negate(),
         }
     }
+    pub fn magnitude(self) -> T {
+        self.s.squared().plus(self.xy.squared())
+    }
+}
+
+impl Complex<f64> {
+    pub fn argument(self) -> f64 {
+        self.xy.atan2(self.s)
+    }
 }
 
 impl<T: Additive> Additive for Complex<T> {
@@ -73,6 +82,7 @@ impl<T: Ring + Clone> VectorSpace for Complex<T> {
 }
 
 impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
+    // TODO I hate this name
     fn quadrance(self) -> Self::Scalar {
         // Q(a + bi)
         // (a + bi)(a - bi)
@@ -145,7 +155,10 @@ impl<T: Field> Field for Complex<T> {
         let q = c.clone().squared().plus(d.clone().squared());
 
         Complex {
-            s: a.clone().mult(c.clone()).plus(b.clone().mult(d.clone())).div(q.clone()),
+            s: a.clone()
+                .mult(c.clone())
+                .plus(b.clone().mult(d.clone()))
+                .div(q.clone()),
             xy: b.mult(c).minus(a.mult(d)).div(q),
         }
     }

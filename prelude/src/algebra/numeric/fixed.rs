@@ -50,6 +50,7 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     }
 
     /// Construct a `Fixed` by providing a mapping of an interval.
+    // TODO AsPrimitive? Save ourselves the cast?
     pub fn from_range(domain: Range<T>, range: Range<Self>, x: T) -> Self {
         // ya + (x - xa)/(xb - xa) * (yb - ya)
         // ya + (x - xa) dy / dx                # Delay the div to improve accuracy
@@ -63,6 +64,7 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     }
 
     /// Destruct a `Fixed` by providing a mapping of an interval
+    // TODO AsPrimitive? Save ourselves the cast?
     pub fn to_range(self, domain: Range<Self>, range: Range<T>) -> T {
         let dx = domain.end.minus(domain.start.clone()).raw;
         let dy = range.end.minus(range.start.clone());

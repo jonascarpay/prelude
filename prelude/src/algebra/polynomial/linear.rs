@@ -15,6 +15,7 @@ use super::super::abstract_::{
 use super::over_ring::OverRing;
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
+/// Might also be called an affine map (?)
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Linear<T> {
     pub c1: T,
@@ -27,21 +28,6 @@ pub fn lerp<T: Additive>(zero: T, one: T) -> Linear<T> {
         c0: zero,
     }
 }
-
-/*
-pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
-    let xa = from.start;
-    let xb = from.end;
-    let ya = to.start;
-    let yb = to.end;
-    // equivalently: lerp(ya, yb).compose(lerp(xa, xb).inverse())
-    let inv = (xb.minus(xa.clone())).recip();
-    Linear {
-        c1: yb.minus(ya.clone()).mult(inv),
-        c0: ya.minus(xa),
-    }
-}
-*/
 
 pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     let xa = from.start;

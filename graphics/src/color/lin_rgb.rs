@@ -6,7 +6,10 @@ use prelude::{
     impl_additive_ops, impl_vector_space_mul,
 };
 
-use crate::color::oklab::{rgb64_to_oklab64, Oklab64};
+use crate::color::{
+    oklab::{rgb64_to_oklab64, Oklab64},
+    srgb::Srgb,
+};
 
 pub fn rgb<T>(r: T, g: T, b: T) -> LinRgb<T> {
     LinRgb::new(r, g, b)
@@ -47,6 +50,18 @@ impl LinRgb8 {
 impl LinRgb<f64> {
     pub fn to_oklab64(self) -> Oklab64 {
         rgb64_to_oklab64(self)
+    }
+    pub fn to_srgb(self) -> Srgb {
+        // TODO put somewhere sensible
+        fn encode(x: f64) -> Unorm8 {
+            const GAMMA: f64 = 2.2;
+            Unorm8((x.powf(1.0 / GAMMA) * 255.).round() as u8)
+        }
+        Srgb {
+            r: encode(self.r),
+            g: encode(self.g),
+            b: encode(self.b),
+        }
     }
 }
 

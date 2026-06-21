@@ -5,9 +5,9 @@ use std::{
 
 use prelude::algebra::V2;
 
-use crate::color::lin_rgb::LinRgb8;
+use crate::color::srgb::Srgb;
 
-pub fn write_ppm(path: &str, size: V2<usize>, pixels: &[LinRgb8]) -> std::io::Result<()> {
+pub fn write_ppm(path: &str, size: V2<usize>, pixels: &[Srgb]) -> std::io::Result<()> {
     let file = File::create(path)?;
     let mut buf = BufWriter::new(file);
     write!(buf, "P6\n{} {}\n255\n", size.x, size.y)?;

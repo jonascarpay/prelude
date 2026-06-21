@@ -27,6 +27,9 @@ impl Srgb {
     pub const fn encode_softbuffer(self) -> u32 {
         (self.r.0 as u32) << 16 | (self.g.0 as u32) << 8 | (self.b.0 as u32)
     }
+    pub const fn pack(self) -> [u8; 3] {
+        [self.r.0, self.g.0, self.b.0]
+    }
 }
 
 impl From<LinRgb8> for Srgb {
