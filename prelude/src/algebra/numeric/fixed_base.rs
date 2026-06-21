@@ -1,8 +1,9 @@
 use std::ops::{Shl, Shr};
 
-use crate::algebra::{abstract_::EuclideanRing, Ring};
+use crate::algebra::abstract_::EuclideanRing;
 
-pub trait FixedBase: Ring + Shl<u32, Output = Self> + Shr<u32, Output = Self> {
+// TODO trait synonym
+pub trait FixedBase: EuclideanRing + Shl<u32, Output = Self> + Shr<u32, Output = Self> {
     type Wide: EuclideanRing + Shl<u32, Output = Self::Wide> + Shr<u32, Output = Self::Wide>;
     const MIN: Self;
     const MAX: Self;

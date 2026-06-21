@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use crate::{
     algebra::{
         abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
@@ -45,6 +47,30 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     pub fn to_f64(self) -> f64 {
         let scale = (2.0_f64).powi(FRAC_BITS as i32);
         self.raw.to_f64() / scale
+    }
+
+    /// Construct a `Fixed` by providing a mapping of an interval.
+    pub fn from_range(domain: Range<T>, range: Range<Self>, x: T) -> Self {
+        // ya + (x - xa)/(xb - xa) * (yb - ya)
+        // ya + (x - xa) dy / dx                # Delay the div to improve accuracy
+        let dx = domain.end.minus(domain.start.clone());
+        let dy = range.end.minus(range.start.clone()).raw;
+        let y = (x.minus(domain.start))
+            .mult(dy)
+            .div_euclid(dx)
+            .plus(range.start.raw);
+        Fixed { raw: y }
+    }
+
+    /// Destruct a `Fixed` by providing a mapping of an interval
+    pub fn to_range(self, domain: Range<Self>, range: Range<T>) -> T {
+        let dx = domain.end.minus(domain.start.clone()).raw;
+        let dy = range.end.minus(range.start.clone());
+        let y = (self.minus(domain.start).raw)
+            .mult(dy)
+            .div_euclid(dx)
+            .plus(range.start);
+        y
     }
 
     /// Integer part. Floors toward negative infinity, such that (a.trunc() << FRAC_BITS + a.fract) = a.into_raw().
@@ -283,5 +309,27 @@ mod tests {
             let bound = (b.into_raw().unsigned_abs() as i32 + 255) / 256;
             prop_assert!(approx(r, a, bound), "{:?} vs {:?} (bound {})", r, a, bound);
         }
+    }
+
+    #[test]
+    fn from_range_endpoints() {
+        type R = Fixed<i32, 8>;
+        let xa = -234;
+        let xb = 567;
+        let ya = R::from_f64(-3.14);
+        let yb = R::from_f64(7.54);
+        assert_eq!(R::from_range(xa..xb, ya..yb, xa), ya);
+        assert_eq!(R::from_range(xa..xb, ya..yb, xb), yb);
+    }
+
+    #[test]
+    fn to_range_endpoints() {
+        type R = Fixed<i32, 8>;
+        let xa = R::from_f64(-3.14);
+        let xb = R::from_f64(7.54);
+        let ya = -234i32;
+        let yb = 567;
+        assert_eq!(xa.to_range(xa..xb, ya..yb), ya);
+        assert_eq!(xb.to_range(xa..xb, ya..yb), yb);
     }
 }

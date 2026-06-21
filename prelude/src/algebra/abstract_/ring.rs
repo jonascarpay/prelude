@@ -34,6 +34,10 @@ pub trait Ring: Additive + Sized + Clone {
     }
 }
 
+pub fn one<R: Ring>() -> R {
+    R::one()
+}
+
 impl<A, B> Ring for (A, B)
 where
     A: Ring,

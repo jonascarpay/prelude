@@ -44,6 +44,10 @@ pub trait Additive: Sized + Clone {
     //  - Multiplicative group ambiguity
 }
 
+pub fn zero<T: Additive>() -> T {
+    T::zero()
+}
+
 pub trait EqAdditive: Eq + Additive {
     fn is_zero(&self) -> bool {
         self == &Self::zero()
