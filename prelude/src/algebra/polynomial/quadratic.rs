@@ -5,6 +5,7 @@ use super::super::abstract_::{
     VectorSpace,
 };
 use super::linear::Linear;
+use super::over_ring::OverRing;
 
 /// A degree 2 univariate polynomial, i.e. of the form `c2 * x^2 + c1 * x + c0`
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -78,23 +79,54 @@ impl<T: Ring + Copy> VectorSpace for Quadratic<T> {
 impl_additive_ops!([T: Additive] Quadratic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Quadratic<T>);
 
-impl<T: VectorSpace> Curve for Quadratic<T> {
-    type Domain = T::Scalar;
-    type Codomain = T;
-    fn evaluate(self, x: T::Scalar) -> T {
+impl<T: Ring> Quadratic<T> {
+    pub fn evaluate_ring(self, x: T) -> T {
+        self.c0
+            .plus(self.c1.mult(x.clone()))
+            .plus(self.c2.mult(x.clone().squared()))
+    }
+
+    pub fn derivative_ring(self) -> Linear<T> {
+        Linear {
+            c0: self.c1,
+            c1: self.c2.imult(2),
+        }
+    }
+
+    pub fn over_ring(self) -> OverRing<Self> {
+        OverRing {
+            over_vector_space: self,
+        }
+    }
+}
+
+impl<T: VectorSpace> Quadratic<T> {
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
         self.c0
             .plus(self.c1.scale(x.clone()))
             .plus(self.c2.scale(x.clone().squared()))
     }
-}
 
-impl<T: Ring + Copy> DifferentiableCurve for Quadratic<T> {
-    type Derivative = Linear<T>;
-    fn derivative(self) -> Self::Derivative {
+    pub fn derivative_vector_space(self) -> Linear<T> {
         Linear {
             c0: self.c1,
-            c1: self.c2.mult(T::from_integer(2)),
+            c1: self.c2.iscale(2),
         }
+    }
+}
+
+impl<T: VectorSpace> Curve for Quadratic<T> {
+    type Domain = T::Scalar;
+    type Codomain = T;
+    fn evaluate(self, x: T::Scalar) -> T {
+        self.evaluate_vector_space(x)
+    }
+}
+
+impl<T: VectorSpace> DifferentiableCurve for Quadratic<T> {
+    type Derivative = Linear<T>;
+    fn derivative(self) -> Self::Derivative {
+        self.derivative_vector_space()
     }
 }
 

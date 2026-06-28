@@ -12,6 +12,7 @@ use super::super::abstract_::{
     field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve,
     Ring, VectorSpace,
 };
+use super::over_ring::OverRing;
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -138,18 +139,44 @@ impl<T: Ring + Copy> VectorSpace for Linear<T> {
 impl_additive_ops!([T: Additive] Linear<T>);
 impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
 
-impl<T: Ring + Copy> Curve for Linear<T> {
-    type Domain = T;
-    type Codomain = T;
-    fn evaluate(self, x: T) -> T {
+impl<T: Ring> Linear<T> {
+    pub fn evaluate_ring(self, x: T) -> T {
         self.c1.mult(x).plus(self.c0)
+    }
+
+    pub fn derivative_ring(self) -> T {
+        self.c1
+    }
+
+    pub fn over_ring(self) -> OverRing<Self> {
+        OverRing {
+            over_vector_space: self,
+        }
     }
 }
 
-impl<T: Ring + Copy> DifferentiableCurve for Linear<T> {
+impl<T: VectorSpace> Linear<T> {
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
+        self.c1.scale(x).plus(self.c0)
+    }
+
+    pub fn derivative_vector_space(self) -> T {
+        self.c1
+    }
+}
+
+impl<T: VectorSpace> Curve for Linear<T> {
+    type Domain = T::Scalar;
+    type Codomain = T;
+    fn evaluate(self, x: T::Scalar) -> T {
+        self.evaluate_vector_space(x)
+    }
+}
+
+impl<T: VectorSpace> DifferentiableCurve for Linear<T> {
     type Derivative = T;
     fn derivative(self) -> Self::Derivative {
-        self.c1
+        self.derivative_vector_space()
     }
 }
 
@@ -197,7 +224,7 @@ mod tests {
         ) {
             prop_assume!(domain_start != domain_end);
             prop_assert_eq!(
-                remap(domain_start..domain_end, range_start..range_end).evaluate(domain_start),
+                remap(domain_start..domain_end, range_start..range_end).evaluate_ring(domain_start),
                 range_start
             )
         }
@@ -211,7 +238,7 @@ mod tests {
         ) {
             prop_assume!(domain_start != domain_end);
             prop_assert_eq!(
-                remap(domain_start..domain_end, range_start..range_end).evaluate(domain_end),
+                remap(domain_start..domain_end, range_start..range_end).evaluate_ring(domain_end),
                 range_end
             )
         }

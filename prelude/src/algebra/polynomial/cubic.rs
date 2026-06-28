@@ -6,6 +6,7 @@ use super::super::abstract_::{
     VectorSpace,
 };
 use super::linear::Linear;
+use super::over_ring::OverRing;
 use super::quadratic::Quadratic;
 
 /// A degree 3 univariate polynomial, i.e. of the form `c3 * x^3 + c2 * x^2 + c1 * x + c0`
@@ -118,25 +119,58 @@ impl<T: Ring + Copy> VectorSpace for Cubic<T> {
 impl_additive_ops!([T: Additive] Cubic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Cubic<T>);
 
-impl<T: VectorSpace> Curve for Cubic<T> {
-    type Domain = T::Scalar;
-    type Codomain = T;
-    fn evaluate(self, x: T::Scalar) -> T {
+impl<T: Ring> Cubic<T> {
+    pub fn evaluate_ring(self, x: T) -> T {
         self.c0
-            .plus(self.c1.scale(x.clone()))
-            .plus(self.c2.scale(x.clone().squared()))
-            .plus(self.c3.scale(x.cubed()))
+            .plus(self.c1.mult(x.clone()))
+            .plus(self.c2.mult(x.clone().squared()))
+            .plus(self.c3.mult(x.cubed()))
     }
-}
 
-impl<T: Ring + Copy> DifferentiableCurve for Cubic<T> {
-    type Derivative = Quadratic<T>;
-    fn derivative(self) -> Self::Derivative {
+    pub fn derivative_ring(self) -> Quadratic<T> {
         Quadratic {
             c0: self.c1,
             c1: self.c2.imult(2),
             c2: self.c3.imult(3),
         }
+    }
+
+    pub fn over_ring(self) -> OverRing<Self> {
+        OverRing {
+            over_vector_space: self,
+        }
+    }
+}
+
+impl<T: VectorSpace> Cubic<T> {
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
+        self.c0
+            .plus(self.c1.scale(x.clone()))
+            .plus(self.c2.scale(x.clone().squared()))
+            .plus(self.c3.scale(x.cubed()))
+    }
+
+    pub fn derivative_vector_space(self) -> Quadratic<T> {
+        Quadratic {
+            c0: self.c1,
+            c1: self.c2.iscale(2),
+            c2: self.c3.iscale(3),
+        }
+    }
+}
+
+impl<T: VectorSpace> Curve for Cubic<T> {
+    type Domain = T::Scalar;
+    type Codomain = T;
+    fn evaluate(self, x: T::Scalar) -> T {
+        self.evaluate_vector_space(x)
+    }
+}
+
+impl<T: VectorSpace> DifferentiableCurve for Cubic<T> {
+    type Derivative = Quadratic<T>;
+    fn derivative(self) -> Self::Derivative {
+        self.derivative_vector_space()
     }
 }
 
