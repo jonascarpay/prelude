@@ -1,3 +1,4 @@
+use crate::algebra::abstract_::Functor;
 use crate::algebra::polynomial::spline::Spline;
 
 use super::super::abstract_::{
@@ -162,6 +163,19 @@ impl<T: Additive> From<Quadratic<T>> for Cubic<T> {
             c1: q.c1,
             c2: q.c2,
             ..Self::zero()
+        }
+    }
+}
+
+impl<T> Functor for Cubic<T> {
+    type Param = T;
+    type Output<B> = Cubic<B>;
+    fn map<B, F: FnMut(T) -> B>(self, mut f: F) -> Cubic<B> {
+        Cubic {
+            c0: f(self.c0),
+            c1: f(self.c1),
+            c2: f(self.c2),
+            c3: f(self.c3),
         }
     }
 }

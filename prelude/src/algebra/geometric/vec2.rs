@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use crate::algebra::{
-    abstract_::{Group, InnerProductSpace, Monoid, Semigroup},
+    abstract_::{Functor, Group, InnerProductSpace, Monoid, Semigroup},
     geometric::{
         complex::Complex,
         vec3::{v3, V3},
@@ -51,24 +51,6 @@ impl<T> V2<T> {
     {
         [Self::xunit(), Self::yunit()]
     }
-    // TODO functor??
-    pub fn map<Out, F: FnMut(T) -> Out>(self, mut f: F) -> V2<Out> {
-        V2 {
-            x: f(self.x),
-            y: f(self.y),
-        }
-    }
-    pub fn map_into<Out: From<T>>(self) -> V2<Out> {
-        V2 {
-            x: self.x.into(),
-            y: self.y.into(),
-        }
-    }
-    pub fn map_try_into<Out: TryFrom<T>>(self) -> Result<V2<Out>, Out::Error> {
-        let x = self.x.try_into()?;
-        let y = self.y.try_into()?;
-        Ok(V2 { x, y })
-    }
     pub fn pack(self) -> [T; 2] {
         [self.x, self.y]
     }
@@ -86,6 +68,17 @@ impl<T> V2<T> {
     {
         (bounds.start.x <= self.x && self.x < bounds.end.x)
             && (bounds.start.y <= self.y && self.y < bounds.end.y)
+    }
+}
+
+impl<T> Functor for V2<T> {
+    type Param = T;
+    type Output<B> = V2<B>;
+    fn map<B, F: FnMut(T) -> B>(self, mut f: F) -> V2<B> {
+        V2 {
+            x: f(self.x),
+            y: f(self.y),
+        }
     }
 }
 

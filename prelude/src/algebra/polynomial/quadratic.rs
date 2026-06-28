@@ -1,3 +1,5 @@
+use crate::algebra::abstract_::Functor;
+
 use super::super::abstract_::{
     impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
     VectorSpace,
@@ -108,6 +110,18 @@ impl<T: Additive> From<Linear<T>> for Quadratic<T> {
             c0: l.c0,
             c1: l.c1,
             ..Self::zero()
+        }
+    }
+}
+
+impl<T> Functor for Quadratic<T> {
+    type Param = T;
+    type Output<B> = Quadratic<B>;
+    fn map<B, F: FnMut(T) -> B>(self, mut f: F) -> Quadratic<B> {
+        Quadratic {
+            c0: f(self.c0),
+            c1: f(self.c1),
+            c2: f(self.c2),
         }
     }
 }

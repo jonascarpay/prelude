@@ -1,7 +1,10 @@
 use std::ops::Range;
 
 use crate::algebra::{
-    abstract_::group::{Group, Monoid, Semigroup},
+    abstract_::{
+        group::{Group, Monoid, Semigroup},
+        Functor,
+    },
     v2, V2,
 };
 
@@ -153,6 +156,17 @@ impl<T: Ring + Copy> DifferentiableCurve for Linear<T> {
 impl<T: Additive> From<T> for Linear<T> {
     fn from(c0: T) -> Self {
         Linear { c0, ..Self::zero() }
+    }
+}
+
+impl<T> Functor for Linear<T> {
+    type Param = T;
+    type Output<B> = Linear<B>;
+    fn map<B, F: FnMut(T) -> B>(self, mut f: F) -> Self::Output<B> {
+        Linear {
+            c0: f(self.c0),
+            c1: f(self.c1),
+        }
     }
 }
 
