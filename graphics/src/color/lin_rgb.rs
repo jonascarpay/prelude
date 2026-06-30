@@ -6,6 +6,8 @@ use prelude::{
     impl_additive_ops, impl_vector_space_mul,
 };
 
+use crate::color::oklab::{rgb64_to_oklab64, Oklab64};
+
 pub fn rgb<T>(r: T, g: T, b: T) -> LinRgb<T> {
     LinRgb::new(r, g, b)
 }
@@ -39,6 +41,12 @@ impl<T: Ring> LinRgb<T> {
 impl LinRgb8 {
     pub fn pack(self) -> [u8; 3] {
         [self.r.0, self.g.0, self.b.0]
+    }
+}
+
+impl LinRgb<f64> {
+    pub fn to_oklab64(self) -> Oklab64 {
+        rgb64_to_oklab64(self)
     }
 }
 
