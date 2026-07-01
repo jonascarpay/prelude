@@ -2,7 +2,9 @@ use std::ops::Range;
 
 use crate::{
     algebra::{
-        abstract_::{euclidean_ring::EuclideanRing, field::Field, Additive, Ring, VectorSpace},
+        abstract_::{
+            euclidean_ring::EuclideanRing, field::Field, real::Real, Additive, Ring, VectorSpace,
+        },
         numeric::fixed_base::FixedBase,
     },
     impl_additive_ops, impl_ring_ops,
@@ -153,6 +155,34 @@ impl<T: FixedBase, const FRAC_BITS: u32> Field for Fixed<T, FRAC_BITS> {
         Some(Fixed {
             raw: T::narrow((a << FRAC_BITS).checked_div_euclid(b)?),
         })
+    }
+}
+
+impl<T: FixedBase, const FRAC_BITS: u32> Real for Fixed<T, FRAC_BITS> {
+    fn from_f64(x: f64) -> Self {
+        Self::from_f64(x)
+    }
+
+    fn sqrt(self) -> Self {
+        Fixed {
+            raw: T::narrow(T::isqrt(self.raw.widen() << FRAC_BITS)),
+        }
+    }
+
+    fn cbrt(self) -> Self {
+        todo!()
+    }
+
+    fn sin(self) -> Self {
+        todo!()
+    }
+
+    fn cos(self) -> Self {
+        todo!()
+    }
+
+    fn atan2(self, x: Self) -> Self {
+        todo!()
     }
 }
 

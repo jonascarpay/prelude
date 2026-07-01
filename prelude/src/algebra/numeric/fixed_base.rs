@@ -13,6 +13,8 @@ pub trait FixedBase: EuclideanRing + Shl<u32, Output = Self> + Shr<u32, Output =
     fn narrow(wide: Self::Wide) -> Self;
     fn from_f64(x: f64) -> Self;
     fn to_f64(self) -> f64;
+    // May be moved to a trait at some point
+    fn isqrt(wide: Self::Wide) -> Self::Wide;
 }
 
 macro_rules! impl_fixed_base {
@@ -34,6 +36,9 @@ macro_rules! impl_fixed_base {
             }
             fn to_f64(self) -> f64 {
                 self as f64
+            }
+            fn isqrt(wide: $wide) -> $wide {
+                wide.isqrt()
             }
         }
     };

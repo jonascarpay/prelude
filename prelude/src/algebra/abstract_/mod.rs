@@ -5,6 +5,7 @@ pub mod field;
 pub mod functor;
 pub mod group;
 pub mod inner_product_space;
+pub mod real;
 pub mod ring;
 pub mod vector_space;
 
