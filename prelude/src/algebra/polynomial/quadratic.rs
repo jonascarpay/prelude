@@ -1,11 +1,9 @@
 use crate::algebra::abstract_::Functor;
 
 use super::super::abstract_::{
-    impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve, Ring,
-    VectorSpace,
+    impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
 };
 use super::linear::Linear;
-use super::over_ring::OverRing;
 
 /// A degree 2 univariate polynomial, i.e. of the form `c2 * x^2 + c1 * x + c0`
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -92,12 +90,6 @@ impl<T: Ring> Quadratic<T> {
             c1: self.c2.imult(2),
         }
     }
-
-    pub fn over_ring(self) -> OverRing<Self> {
-        OverRing {
-            over_vector_space: self,
-        }
-    }
 }
 
 impl<T: VectorSpace> Quadratic<T> {
@@ -112,21 +104,6 @@ impl<T: VectorSpace> Quadratic<T> {
             c0: self.c1,
             c1: self.c2.iscale(2),
         }
-    }
-}
-
-impl<T: VectorSpace> Curve for Quadratic<T> {
-    type Domain = T::Scalar;
-    type Codomain = T;
-    fn evaluate(self, x: T::Scalar) -> T {
-        self.evaluate_vector_space(x)
-    }
-}
-
-impl<T: VectorSpace> DifferentiableCurve for Quadratic<T> {
-    type Derivative = Linear<T>;
-    fn derivative(self) -> Self::Derivative {
-        self.derivative_vector_space()
     }
 }
 

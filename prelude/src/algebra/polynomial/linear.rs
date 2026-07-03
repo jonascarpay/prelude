@@ -9,10 +9,8 @@ use crate::algebra::{
 };
 
 use super::super::abstract_::{
-    field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Curve, DifferentiableCurve,
-    Ring, VectorSpace,
+    field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
 };
-use super::over_ring::OverRing;
 
 /// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
 /// Might also be called an affine map (?)
@@ -44,12 +42,13 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     }
 }
 
-// This is really just zipping, might be worth generalizing.
-pub fn remap2<T: Field>(from: Range<V2<T>>, to: Range<V2<T>>) -> V2<Linear<T>> {
-    v2(
-        remap(from.start.x..from.end.x, to.start.x..to.end.x),
-        remap(from.start.y..from.end.y, to.start.y..to.end.y),
-    )
+impl<T> Linear<T> {
+    pub fn evaluate(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        self.c1.scale(x).plus(self.c0)
+    }
 }
 
 impl<T: Ring> Semigroup for Linear<T> {
@@ -122,9 +121,6 @@ impl<T: Ring + Copy> VectorSpace for Linear<T> {
     }
 }
 
-impl_additive_ops!([T: Additive] Linear<T>);
-impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
-
 impl<T: Ring> Linear<T> {
     pub fn evaluate_ring(self, x: T) -> T {
         self.c1.mult(x).plus(self.c0)
@@ -132,12 +128,6 @@ impl<T: Ring> Linear<T> {
 
     pub fn derivative_ring(self) -> T {
         self.c1
-    }
-
-    pub fn over_ring(self) -> OverRing<Self> {
-        OverRing {
-            over_vector_space: self,
-        }
     }
 }
 
@@ -148,21 +138,6 @@ impl<T: VectorSpace> Linear<T> {
 
     pub fn derivative_vector_space(self) -> T {
         self.c1
-    }
-}
-
-impl<T: VectorSpace> Curve for Linear<T> {
-    type Domain = T::Scalar;
-    type Codomain = T;
-    fn evaluate(self, x: T::Scalar) -> T {
-        self.evaluate_vector_space(x)
-    }
-}
-
-impl<T: VectorSpace> DifferentiableCurve for Linear<T> {
-    type Derivative = T;
-    fn derivative(self) -> Self::Derivative {
-        self.derivative_vector_space()
     }
 }
 
@@ -182,6 +157,9 @@ impl<T> Functor for Linear<T> {
         }
     }
 }
+
+impl_additive_ops!([T: Additive] Linear<T>);
+impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
 
 #[cfg(test)]
 mod tests {
