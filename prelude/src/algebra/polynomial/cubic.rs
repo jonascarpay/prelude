@@ -214,7 +214,28 @@ impl<T> Functor for Cubic<T> {
     }
 }
 
+#[inline(always)]
+pub fn unit_hermite3<T>(p_start: T, v_start: T, p_end: T, v_end: T) -> Cubic<T>
+where
+    T: VectorSpace + Clone,
+    T::Scalar: Ring,
+{
+    Cubic {
+        c0: p_start.clone(),
+        c1: v_start.clone(),
+        c2: (p_start.iscaled(-3))
+            .plus(p_end.iscaled(3))
+            .plus(v_start.iscaled(-2))
+            .plus(v_end.negated()),
+        c3: (p_start.iscale(2))
+            .plus(p_end.iscale(-2))
+            .plus(v_start)
+            .plus(v_end),
+    }
+}
+
 /// A cubic Bezier polynomial, given a start point, two control points, and an end point.
+// TODO document unit domain
 pub fn bezier3<T>(p0: T, p1: T, p2: T, p3: T) -> Cubic<T>
 where
     T: VectorSpace + Clone,
