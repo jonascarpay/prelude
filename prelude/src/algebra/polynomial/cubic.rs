@@ -43,7 +43,12 @@ impl<T> Cubic<T> {
         T: Ring,
     {
         let Cubic { c0, c1, c2, c3 } = self;
-        c0.plus(x.clone().mult(c1.plus(x.clone().mult(c2.plus(x.mult(c3))))))
+        c3.mult(x.clone())
+            .plus(c2)
+            .mult(x.clone())
+            .plus(c1)
+            .mult(x)
+            .plus(c0)
     }
 
     pub fn derivative_ring(self) -> Quadratic<T>
@@ -65,6 +70,19 @@ impl<T> Cubic<T> {
             .plus(self.c1.scale(x.clone()))
             .plus(self.c2.scale(x.clone().squared()))
             .plus(self.c3.scale(x.cubed()))
+    }
+
+    pub fn evaluate_vector_space_horner(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        let Cubic { c0, c1, c2, c3 } = self;
+        c3.scale(x.clone())
+            .plus(c2)
+            .scale(x.clone())
+            .plus(c1)
+            .scale(x)
+            .plus(c0)
     }
 
     pub fn derivative_vector_space(self) -> Quadratic<T>

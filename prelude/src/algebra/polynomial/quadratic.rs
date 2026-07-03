@@ -33,7 +33,7 @@ impl<T> Quadratic<T> {
         T: Ring,
     {
         let Quadratic { c0, c1, c2 } = self;
-        c0.plus(x.clone().mult(c1.plus(x.mult(c2))))
+        c2.mult(x.clone()).plus(c1).mult(x).plus(c0)
     }
 
     pub fn evaluate_vector_space(self, x: T::Scalar) -> T
@@ -43,6 +43,14 @@ impl<T> Quadratic<T> {
         self.c0
             .plus(self.c1.scale(x.clone()))
             .plus(self.c2.scale(x.clone().squared()))
+    }
+
+    pub fn evaluate_vector_space_horner(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        let Quadratic { c0, c1, c2 } = self;
+        c2.scale(x.clone()).plus(c1).scale(x).plus(c0)
     }
 
     pub fn derivative(self) -> Linear<T>

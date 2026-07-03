@@ -35,15 +35,16 @@ impl<T> Quintic<T> {
             c4,
             c5,
         } = self;
-        c0.plus(
-            x.clone().mult(
-                c1.plus(
-                    x.clone().mult(
-                        c2.plus(x.clone().mult(c3.plus(x.clone().mult(c4.plus(x.mult(c5)))))),
-                    ),
-                ),
-            ),
-        )
+        c5.mult(x.clone())
+            .plus(c4)
+            .mult(x.clone())
+            .plus(c3)
+            .mult(x.clone())
+            .plus(c2)
+            .mult(x.clone())
+            .plus(c1)
+            .mult(x)
+            .plus(c0)
     }
 
     pub fn evaluate_vector_space(self, x: T::Scalar) -> T
@@ -61,6 +62,30 @@ impl<T> Quintic<T> {
             .plus(self.c3.scale(x3))
             .plus(self.c4.scale(x4))
             .plus(self.c5.scale(x5))
+    }
+
+    pub fn evaluate_vector_space_horner(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        let Quintic {
+            c0,
+            c1,
+            c2,
+            c3,
+            c4,
+            c5,
+        } = self;
+        c5.scale(x.clone())
+            .plus(c4)
+            .scale(x.clone())
+            .plus(c3)
+            .scale(x.clone())
+            .plus(c2)
+            .scale(x.clone())
+            .plus(c1)
+            .scale(x)
+            .plus(c0)
     }
 }
 
