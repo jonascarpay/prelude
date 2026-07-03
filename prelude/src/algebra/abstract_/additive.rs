@@ -110,15 +110,15 @@ impl<T: Additive> Group for AsAdditiveGroup<T> {
 }
 
 #[inline]
-pub fn iter_sum<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
-    iter.fold(T::zero(), T::plus)
+pub fn iter_sum<T: Additive, I: IntoIterator<Item = T>>(i: I) -> T {
+    i.into_iter().fold(T::zero(), T::plus)
 }
 
 /// Sum of an iterator, does not add 0 and the first element.
 /// Tends to optimizer better for small fixed-size iterators, worse for large/dynamic ones.
 #[inline]
-pub fn iter_sum_reduce<T: Additive, I: Iterator<Item = T>>(iter: I) -> T {
-    iter.reduce(T::plus).unwrap_or(T::zero())
+pub fn iter_sum_reduce<T: Additive, I: IntoIterator<Item = T>>(i: I) -> T {
+    i.into_iter().reduce(T::plus).unwrap_or(T::zero())
 }
 
 pub fn step_by<T>(start: T, delta: T) -> ArithmeticSequence<T> {

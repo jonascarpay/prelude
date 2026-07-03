@@ -1,11 +1,8 @@
 use std::ops::Range;
 
-use crate::algebra::{
-    abstract_::{
-        group::{Group, Monoid, Semigroup},
-        Functor,
-    },
-    v2, V2,
+use crate::algebra::abstract_::{
+    group::{Group, Monoid, Semigroup},
+    Functor,
 };
 
 use super::super::abstract_::{
@@ -43,7 +40,18 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
 }
 
 impl<T> Linear<T> {
-    pub fn evaluate(self, x: T::Scalar) -> T
+    pub fn evaluate_ring(self, x: T) -> T
+    where
+        T: Ring,
+    {
+        self.c1.mult(x).plus(self.c0)
+    }
+
+    pub fn derivative(self) -> T {
+        self.c1
+    }
+
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T
     where
         T: VectorSpace,
     {
@@ -121,26 +129,6 @@ impl<T: Ring + Copy> VectorSpace for Linear<T> {
     }
 }
 
-impl<T: Ring> Linear<T> {
-    pub fn evaluate_ring(self, x: T) -> T {
-        self.c1.mult(x).plus(self.c0)
-    }
-
-    pub fn derivative_ring(self) -> T {
-        self.c1
-    }
-}
-
-impl<T: VectorSpace> Linear<T> {
-    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
-        self.c1.scale(x).plus(self.c0)
-    }
-
-    pub fn derivative_vector_space(self) -> T {
-        self.c1
-    }
-}
-
 impl<T: Additive> From<T> for Linear<T> {
     fn from(c0: T) -> Self {
         Linear { c0, ..Self::zero() }
@@ -171,12 +159,12 @@ mod tests {
     proptest! {
         #[test]
         fn lerp_0_is_start(start: i32, end: i32) {
-            prop_assert_eq!(lerp(start, end).evaluate(0), start);
+            prop_assert_eq!(lerp(start, end).evaluate_ring(0), start);
         }
 
         #[test]
         fn lerp_1_is_end(start: i32, end: i32) {
-            prop_assert_eq!(lerp(start, end).evaluate(1), end);
+            prop_assert_eq!(lerp(start, end).evaluate_ring(1), end);
         }
 
         #[test]

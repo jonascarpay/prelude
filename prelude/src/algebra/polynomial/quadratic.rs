@@ -14,17 +14,44 @@ pub struct Quadratic<T> {
 }
 
 impl<T> Quadratic<T> {
-    pub fn from_roots(a: T, r1: T, r2: T) -> Self
+    pub fn from_roots(r1: T, r2: T) -> Self
     where
         T: Ring + Clone,
     {
-        // a(x - r1)(x - r2)
-        // a(x^2 - r1 x - r2 x + r1 r2)
-        // a x^2 + a (- r1 - r2) x + a r1 r2
+        // (x - r1)(x - r2)
+        // (x^2 - r1 x - r2 x + r1 r2)
+        //  x^2 + (- r1 - r2) x + r1 r2
         Quadratic {
-            c0: a.clone().mult(r1.clone()).mult(r2.clone()),
-            c1: a.clone().mult(r1.plus(r2).negate()),
-            c2: a,
+            c0: r1.clone().mult(r2.clone()),
+            c1: r1.plus(r2).negate(),
+            c2: T::one(),
+        }
+    }
+
+    pub fn evaluate_ring(self, x: T) -> T
+    where
+        T: Ring,
+    {
+        let Quadratic { c0, c1, c2 } = self;
+        c0.plus(x.clone().mult(c1.plus(x.mult(c2))))
+    }
+
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        self.c0
+            .plus(self.c1.scale(x.clone()))
+            .plus(self.c2.scale(x.clone().squared()))
+    }
+
+    pub fn derivative(self) -> Linear<T>
+    where
+        T: Additive,
+    {
+        Linear {
+            c0: self.c1,
+            c1: self.c2.clone().plus(self.c2),
         }
     }
 }
@@ -76,36 +103,6 @@ impl<T: Ring + Copy> VectorSpace for Quadratic<T> {
 
 impl_additive_ops!([T: Additive] Quadratic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Quadratic<T>);
-
-impl<T: Ring> Quadratic<T> {
-    pub fn evaluate_ring(self, x: T) -> T {
-        self.c0
-            .plus(self.c1.mult(x.clone()))
-            .plus(self.c2.mult(x.clone().squared()))
-    }
-
-    pub fn derivative_ring(self) -> Linear<T> {
-        Linear {
-            c0: self.c1,
-            c1: self.c2.imult(2),
-        }
-    }
-}
-
-impl<T: VectorSpace> Quadratic<T> {
-    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
-        self.c0
-            .plus(self.c1.scale(x.clone()))
-            .plus(self.c2.scale(x.clone().squared()))
-    }
-
-    pub fn derivative_vector_space(self) -> Linear<T> {
-        Linear {
-            c0: self.c1,
-            c1: self.c2.iscale(2),
-        }
-    }
-}
 
 impl<T: Additive> From<T> for Quadratic<T> {
     fn from(c0: T) -> Self {

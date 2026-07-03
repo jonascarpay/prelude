@@ -1,3 +1,4 @@
+use crate::algebra::abstract_::ring::one;
 use crate::algebra::abstract_::Functor;
 
 use super::super::abstract_::{
@@ -15,50 +16,65 @@ pub struct Cubic<T> {
     pub c3: T,
 }
 
-impl<T: Ring> Cubic<T> {
-    pub fn x3() -> Self {
+impl<T> Cubic<T> {
+    /// Construct a cubic from the factored from `(x - r1)(x - r2)(x - r3)`
+    pub fn from_roots(r1: T, r2: T, r3: T) -> Self
+    where
+        T: Copy + Ring, // TODO Clone
+    {
+        // (x - r1)(x - r2)(x - r3)
+        // (x - r1)(x^2 - r2 x - r3 x + r2 r3)
+        // x^3 - r2 x^2 - r3 x^2 + r2 r3 x - r1 x^2 + r1 r2 x + r1 r3 x - r1 r2 r3
+        //
+        // x^3
+        // (- r1 - r2 - r3) x^2
+        // (r2 r3 + r1 r2 + r1 r3) x
+        // (- r1 r2 r3)
         Cubic {
-            c3: T::one(),
-            ..Self::zero()
-        }
-    }
-    pub fn x2() -> Self {
-        Cubic {
-            c2: T::one(),
-            ..Self::zero()
-        }
-    }
-    pub fn x1() -> Self {
-        Cubic {
-            c1: T::one(),
-            ..Self::zero()
-        }
-    }
-    pub fn x0() -> Self {
-        Cubic {
-            c0: T::one(),
-            ..Self::zero()
+            c0: r1.mult(r2).mult(r3).negate(),
+            c1: (r1.mult(r2)).plus(r2.mult(r3)).plus(r1.mult(r3)),
+            c2: r1.negate().minus(r2).minus(r3),
+            c3: one(),
         }
     }
 
-    /// Construct a cubic from the factored from `a(x - r1)(x - r2)(x - r3)`
-    pub fn from_roots(a: T, r1: T, r2: T, r3: T) -> Self
+    pub fn evaluate_ring(self, x: T) -> T
     where
-        T: Copy, // TODO Clone
+        T: Ring,
     {
-        // a(x - r1)(x - r2)(x - r3)
-        // a(x - r1)(x^2 - r2 x - r3 x + r2 r3)
-        // ax^3 - a r2 x^2 - a r3 x^2 + a r2 r3 x - a r1 x^2 + a r1 r2 x + a r1 r3 x - a r1 r2 r3
-        //
-        // a x^3
-        // a (- r1 - r2 - r3) x^2
-        // a (r2 r3 + a r1 r2 + a r1 r3) x
-        // a (- r1 r2 r3)
-        Cubic {
-            c0: r1.mult(r2).mult(r3).negate(),
-            c1: (r1.mult(r2).plus(r2.mult(r3)).plus(r1.mult(r3))),
-            c2: (r1.negate().minus(r2).minus(r3).mult(a)),
-            c3: a,
+        let Cubic { c0, c1, c2, c3 } = self;
+        c0.plus(x.clone().mult(c1.plus(x.clone().mult(c2.plus(x.mult(c3))))))
+    }
+
+    pub fn derivative_ring(self) -> Quadratic<T>
+    where
+        T: Ring,
+    {
+        Quadratic {
+            c0: self.c1,
+            c1: self.c2.imult(2),
+            c2: self.c3.imult(3),
+        }
+    }
+
+    pub fn evaluate_vector_space(self, x: T::Scalar) -> T
+    where
+        T: VectorSpace,
+    {
+        self.c0
+            .plus(self.c1.scale(x.clone()))
+            .plus(self.c2.scale(x.clone().squared()))
+            .plus(self.c3.scale(x.cubed()))
+    }
+
+    pub fn derivative_vector_space(self) -> Quadratic<T>
+    where
+        T: VectorSpace,
+    {
+        Quadratic {
+            c0: self.c1,
+            c1: self.c2.iscale(2),
+            c2: self.c3.iscale(3),
         }
     }
 }
@@ -115,40 +131,6 @@ impl<T: Ring + Copy> VectorSpace for Cubic<T> {
 
 impl_additive_ops!([T: Additive] Cubic<T>);
 impl_vector_space_ops!([T: Ring + Copy] Cubic<T>);
-
-impl<T: Ring> Cubic<T> {
-    pub fn evaluate_ring(self, x: T) -> T {
-        self.c0
-            .plus(self.c1.mult(x.clone()))
-            .plus(self.c2.mult(x.clone().squared()))
-            .plus(self.c3.mult(x.cubed()))
-    }
-
-    pub fn derivative_ring(self) -> Quadratic<T> {
-        Quadratic {
-            c0: self.c1,
-            c1: self.c2.imult(2),
-            c2: self.c3.imult(3),
-        }
-    }
-}
-
-impl<T: VectorSpace> Cubic<T> {
-    pub fn evaluate_vector_space(self, x: T::Scalar) -> T {
-        self.c0
-            .plus(self.c1.scale(x.clone()))
-            .plus(self.c2.scale(x.clone().squared()))
-            .plus(self.c3.scale(x.cubed()))
-    }
-
-    pub fn derivative_vector_space(self) -> Quadratic<T> {
-        Quadratic {
-            c0: self.c1,
-            c1: self.c2.iscale(2),
-            c2: self.c3.iscale(3),
-        }
-    }
-}
 
 impl<T: Additive> From<T> for Cubic<T> {
     fn from(c0: T) -> Self {
