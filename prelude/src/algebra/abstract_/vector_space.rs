@@ -1,3 +1,5 @@
+use crate::algebra::abstract_::field::Field;
+
 use super::additive::Additive;
 use super::ring::Ring;
 
@@ -23,6 +25,18 @@ where
     }
     fn iscaled(&self, c: isize) -> Self {
         self.clone().iscale(c)
+    }
+    fn qscale(self, p: isize, q: isize) -> Self
+    where
+        Self::Scalar: Field,
+    {
+        self.scale(Self::Scalar::from_rational(p, q))
+    }
+    fn qscaled(&self, p: isize, q: isize) -> Self
+    where
+        Self::Scalar: Field,
+    {
+        self.clone().qscale(p, q)
     }
     // TODO specify left or right module? Or what side we scale on?
 }

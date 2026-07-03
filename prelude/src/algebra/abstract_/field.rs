@@ -14,6 +14,10 @@ pub trait Field: Ring {
     fn checked_recip(self) -> Option<Self> {
         Self::one().checked_div(self)
     }
+
+    fn from_rational(p: isize, q: isize) -> Self {
+        Self::from_integer(p).div(Self::from_integer(q))
+    }
 }
 
 // TODO: rationals
