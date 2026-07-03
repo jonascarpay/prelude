@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::ops::{BitAnd, BitOr, BitXor, Not, Range, Shl, Shr};
 
 use crate::{
     algebra::{
@@ -17,7 +17,7 @@ pub struct Fixed<T, const FRAC_BITS: u32> {
 
 impl<T: FixedBase + std::fmt::Debug, const FRAC_BITS: u32> std::fmt::Debug for Fixed<T, FRAC_BITS> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Fixed({:?} ≈ {})", self.raw, self.clone().to_f64())
+        write!(f, "Fixed({:?} ≈ {})", self.raw, self.to_f64())
     }
 }
 
@@ -28,7 +28,7 @@ impl<T, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
         Fixed { raw }
     }
 
-    pub fn into_raw(self) -> T {
+    pub fn repr(self) -> T {
         self.raw
     }
 }
@@ -56,8 +56,8 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     pub fn from_range(domain: Range<T>, range: Range<Self>, x: T) -> Self {
         // ya + (x - xa)/(xb - xa) * (yb - ya)
         // ya + (x - xa) dy / dx                # Delay the div to improve accuracy
-        let dx = domain.end.minus(domain.start.clone());
-        let dy = range.end.minus(range.start.clone()).raw;
+        let dx = domain.end.minus(domain.start);
+        let dy = range.end.minus(range.start).raw;
         let y = (x.minus(domain.start))
             .mult(dy)
             .div_euclid(dx)
@@ -68,8 +68,8 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     /// Destruct a `Fixed` by providing a mapping of an interval
     // TODO AsPrimitive? Save ourselves the cast?
     pub fn to_range(self, domain: Range<Self>, range: Range<T>) -> T {
-        let dx = domain.end.minus(domain.start.clone()).raw;
-        let dy = range.end.minus(range.start.clone());
+        let dx = domain.end.minus(domain.start).raw;
+        let dy = range.end.minus(range.start);
         let y = (self.minus(domain.start).raw)
             .mult(dy)
             .div_euclid(dx)
@@ -83,8 +83,64 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     }
 
     /// Fractional part, in `[0, 2^FRAC_BITS)`.
-    pub fn fract(self) -> T {
-        self.raw.clone().minus(self.trunc() << FRAC_BITS)
+    pub fn fract(self) -> Self {
+        Fixed {
+            raw: self.raw & !(!(T::ZERO) << FRAC_BITS),
+        }
+    }
+}
+
+impl<Scalar, T: Shl<Scalar>, const FRAC_BITS: u32> Shl<Scalar> for Fixed<T, FRAC_BITS> {
+    type Output = Fixed<T::Output, FRAC_BITS>;
+    fn shl(self, rhs: Scalar) -> Self::Output {
+        Fixed {
+            raw: self.raw.shl(rhs),
+        }
+    }
+}
+
+impl<Scalar, T: Shr<Scalar>, const FRAC_BITS: u32> Shr<Scalar> for Fixed<T, FRAC_BITS> {
+    type Output = Fixed<T::Output, FRAC_BITS>;
+    fn shr(self, rhs: Scalar) -> Self::Output {
+        Fixed {
+            raw: self.raw.shr(rhs),
+        }
+    }
+}
+
+impl<T: BitAnd<T, Output = T>, const FRAC_BITS: u32> BitAnd for Fixed<T, FRAC_BITS> {
+    type Output = Self;
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Fixed {
+            raw: self.raw.bitand(rhs.raw),
+        }
+    }
+}
+
+impl<T: BitOr<T, Output = T>, const FRAC_BITS: u32> BitOr for Fixed<T, FRAC_BITS> {
+    type Output = Self;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Fixed {
+            raw: self.raw.bitor(rhs.raw),
+        }
+    }
+}
+
+impl<T: BitXor<T, Output = T>, const FRAC_BITS: u32> BitXor for Fixed<T, FRAC_BITS> {
+    type Output = Self;
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        Fixed {
+            raw: self.raw.bitxor(rhs.raw),
+        }
+    }
+}
+
+impl<T: Not<Output = T>, const FRAC_BITS: u32> Not for Fixed<T, FRAC_BITS> {
+    type Output = Self;
+    fn not(self) -> Self {
+        Fixed {
+            raw: self.raw.not(),
+        }
     }
 }
 
@@ -261,22 +317,22 @@ mod tests {
     proptest! {
         #[test]
         fn raw_roundtrip(x in any::<i16>()) {
-            prop_assert_eq!(I::from_raw(x).into_raw(), x);
+            prop_assert_eq!(I::from_raw(x).repr(), x);
         }
 
         #[test]
         fn trunc_fract_decomposition(a in i()) {
             let t = a.trunc();
             let f = a.fract();
-            prop_assert_eq!((t << 8) + f, a.into_raw());
-            prop_assert!((0..256).contains(&f));
+            prop_assert_eq!((t << 8) + f.repr(), a.repr());
+            prop_assert!((0..256).contains(&f.repr()));
         }
     }
 
     // Multiplication and division — algebraic laws and their failure modes.
 
     fn approx(a: I, b: I, epsilon: i32) -> bool {
-        (a.into_raw() as i32 - b.into_raw() as i32).abs() <= epsilon
+        (a.repr() as i32 - b.repr() as i32).abs() <= epsilon
     }
 
     /// Values with real magnitude ≤ 1 (raw in [-256, 256]) — small enough that
@@ -338,7 +394,7 @@ mod tests {
         #[test]
         fn div_mult_roundtrip(a in small_i(), b in at_least_one()) {
             let r = a.div(b).mult(b);
-            let bound = (b.into_raw().unsigned_abs() as i32 + 255) / 256;
+            let bound = (b.repr().unsigned_abs() as i32 + 255) / 256;
             prop_assert!(approx(r, a, bound), "{:?} vs {:?} (bound {})", r, a, bound);
         }
     }
