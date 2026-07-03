@@ -5,10 +5,10 @@ pub trait Real: Field + Clone {
     fn from_f64(x: f64) -> Self;
     fn sqrt(self) -> Self;
     fn cbrt(self) -> Self;
-    fn sin(self) -> Self;
-    fn cos(self) -> Self;
-    fn sin_cos(self) -> (Self, Self) {
-        (self.clone().sin(), self.cos())
+    fn sin_tau(self) -> Self;
+    fn cos_tau(self) -> Self;
+    fn sin_cos_tau(self) -> (Self, Self) {
+        (self.clone().sin_tau(), self.cos_tau())
     }
     fn atan2(self, x: Self) -> Self;
 }
@@ -26,16 +26,16 @@ impl Real for f64 {
         self.cbrt()
     }
 
-    fn sin(self) -> Self {
-        self.sin()
+    fn sin_tau(self) -> Self {
+        (self * std::f64::consts::TAU).sin()
     }
 
-    fn cos(self) -> Self {
-        self.cos()
+    fn cos_tau(self) -> Self {
+        (self * std::f64::consts::TAU).cos()
     }
 
-    fn sin_cos(self) -> (Self, Self) {
-        f64::sin_cos(self)
+    fn sin_cos_tau(self) -> (Self, Self) {
+        (self * std::f64::consts::TAU).sin_cos()
     }
 
     fn atan2(self, x: Self) -> Self {
@@ -56,19 +56,19 @@ impl Real for f32 {
         self.cbrt()
     }
 
-    fn sin(self) -> Self {
-        self.sin()
-    }
-
-    fn cos(self) -> Self {
-        self.cos()
-    }
-
-    fn sin_cos(self) -> (Self, Self) {
-        f32::sin_cos(self)
-    }
-
     fn atan2(self, x: Self) -> Self {
         self.atan2(x)
+    }
+
+    fn sin_tau(self) -> Self {
+        (self * std::f32::consts::TAU).sin()
+    }
+
+    fn cos_tau(self) -> Self {
+        (self * std::f32::consts::TAU).cos()
+    }
+
+    fn sin_cos_tau(self) -> (Self, Self) {
+        (self * std::f32::consts::TAU).sin_cos()
     }
 }

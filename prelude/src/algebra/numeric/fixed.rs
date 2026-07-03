@@ -173,11 +173,11 @@ impl<T: FixedBase, const FRAC_BITS: u32> Real for Fixed<T, FRAC_BITS> {
         todo!()
     }
 
-    fn sin(self) -> Self {
+    fn sin_tau(self) -> Self {
         todo!()
     }
 
-    fn cos(self) -> Self {
+    fn cos_tau(self) -> Self {
         todo!()
     }
 
