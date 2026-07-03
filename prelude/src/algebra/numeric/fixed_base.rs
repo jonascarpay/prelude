@@ -1,10 +1,15 @@
-use std::ops::{Not, Shl, Shr};
+use std::ops::{BitAnd, Not, Shl, Shr};
 
 use crate::algebra::abstract_::EuclideanRing;
 
 // TODO trait synonym
 pub trait FixedBase:
-    Copy + EuclideanRing + Not<Output = Self> + Shl<u32, Output = Self> + Shr<u32, Output = Self>
+    Copy
+    + EuclideanRing
+    + Not<Output = Self>
+    + BitAnd<Self, Output = Self>
+    + Shl<u32, Output = Self>
+    + Shr<u32, Output = Self>
 {
     type Wide: EuclideanRing + Shl<u32, Output = Self::Wide> + Shr<u32, Output = Self::Wide>;
     const MIN: Self;
