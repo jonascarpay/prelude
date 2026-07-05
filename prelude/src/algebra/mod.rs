@@ -6,3 +6,4 @@ pub mod polynomial;
 
 pub use abstract_::Ring;
 pub use geometric::vec2::{v2, V2};
+pub use linear::affine::{lerp, remap};

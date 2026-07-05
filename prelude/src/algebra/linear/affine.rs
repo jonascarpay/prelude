@@ -9,22 +9,24 @@ use super::super::abstract_::{
     field::Field, impl_additive_ops, impl_vector_space_ops, Additive, Ring, VectorSpace,
 };
 
-/// A degree 1 univariate polynomial, i.e. of the form `c1 * x + c0`
-/// Might also be called an affine map (?)
+/// An affine map, i.e. a combination of scaling and translating.
+///
+/// Functionally identical to a degree 1 univariate polynomial, but unlike a general polynomial,
+/// this forms a group.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Linear<T> {
+pub struct Affine<T> {
     pub c1: T,
     pub c0: T,
 }
 
-pub fn lerp<T: Additive>(zero: T, one: T) -> Linear<T> {
-    Linear {
+pub fn lerp<T: Additive>(zero: T, one: T) -> Affine<T> {
+    Affine {
         c1: one.minus(zero.clone()),
         c0: zero,
     }
 }
 
-pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
+pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Affine<T> {
     let xa = from.start;
     let xb = from.end;
     let ya = to.start;
@@ -33,13 +35,13 @@ pub fn remap<T: Field>(from: Range<T>, to: Range<T>) -> Linear<T> {
     let dx = xb.minus(xa.clone());
     let c = dy.div(dx);
     // equivalently: lerp(ya, yb).compose(lerp(xa, xb).inverse())
-    Linear {
+    Affine {
         c1: c.clone(),
         c0: ya.minus(xa.mult(c)),
     }
 }
 
-impl<T> Linear<T> {
+impl<T> Affine<T> {
     pub fn evaluate_ring(self, x: T) -> T
     where
         T: Ring,
@@ -59,95 +61,95 @@ impl<T> Linear<T> {
     }
 }
 
-impl<T: Ring> Semigroup for Linear<T> {
+impl<T: Ring> Semigroup for Affine<T> {
     fn compose(self, rhs: Self) -> Self {
-        let Linear { c1: a, c0: b } = self;
-        let Linear { c1: c, c0: d } = rhs;
-        Linear {
+        let Affine { c1: a, c0: b } = self;
+        let Affine { c1: c, c0: d } = rhs;
+        Affine {
             c1: a.clone().mult(c),
             c0: a.mult(d).plus(b),
         }
     }
 }
 
-impl<T: Ring> Monoid for Linear<T> {
+impl<T: Ring> Monoid for Affine<T> {
     fn identity() -> Self {
-        Linear {
+        Affine {
             c1: T::one(),
             c0: T::zero(),
         }
     }
 }
 
-impl<T: Field> Group for Linear<T> {
+impl<T: Field> Group for Affine<T> {
     fn inverse(self) -> Self {
         let inv = self.c1.recip();
-        Linear {
+        Affine {
             c1: inv.clone(),
             c0: self.c0.negate().mult(inv),
         }
     }
 }
 
-impl<T: Additive> Additive for Linear<T> {
+impl<T: Additive> Additive for Affine<T> {
     fn plus(self, rhs: Self) -> Self {
-        Linear {
+        Affine {
             c1: self.c1.plus(rhs.c1),
             c0: self.c0.plus(rhs.c0),
         }
     }
 
     fn minus(self, rhs: Self) -> Self {
-        Linear {
+        Affine {
             c1: self.c1.minus(rhs.c1),
             c0: self.c0.minus(rhs.c0),
         }
     }
 
     fn zero() -> Self {
-        Linear {
+        Affine {
             c1: T::zero(),
             c0: T::zero(),
         }
     }
 
     fn negate(self) -> Self {
-        Linear {
+        Affine {
             c1: self.c1.negate(),
             c0: self.c0.negate(),
         }
     }
 }
 
-impl<T: Ring + Copy> VectorSpace for Linear<T> {
+impl<T: Ring + Copy> VectorSpace for Affine<T> {
     type Scalar = T;
     fn scale(self, c: T) -> Self {
-        Linear {
+        Affine {
             c1: self.c1.mult(c),
             c0: self.c0.mult(c),
         }
     }
 }
 
-impl<T: Additive> From<T> for Linear<T> {
+impl<T: Additive> From<T> for Affine<T> {
     fn from(c0: T) -> Self {
-        Linear { c0, ..Self::zero() }
+        Affine { c0, ..Self::zero() }
     }
 }
 
-impl<T> Functor for Linear<T> {
+impl<T> Functor for Affine<T> {
     type Param = T;
-    type Output<B> = Linear<B>;
+    type Output<B> = Affine<B>;
     fn map<B, F: FnMut(T) -> B>(self, mut f: F) -> Self::Output<B> {
-        Linear {
+        Affine {
             c0: f(self.c0),
             c1: f(self.c1),
         }
     }
 }
 
-impl_additive_ops!([T: Additive] Linear<T>);
-impl_vector_space_ops!([T: Ring + Copy] Linear<T>);
+impl_additive_ops!([T: Additive] Affine<T>);
+impl_vector_space_ops!([T: Ring + Copy] Affine<T>);
 
 #[cfg(test)]
 mod tests {
