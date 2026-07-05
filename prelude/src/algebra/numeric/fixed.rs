@@ -245,6 +245,18 @@ impl<T: FixedBase, const FRAC_BITS: u32> Real for Fixed<T, FRAC_BITS> {
 impl_additive_ops!([T: Additive, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
 impl_ring_ops!([T: FixedBase, const FRAC_BITS: u32] Fixed<T, FRAC_BITS>);
 
+impl<T: std::ops::Mul<T, Output = T>, const FRAC_BITS: u32> std::ops::Mul<T>
+    for Fixed<T, FRAC_BITS>
+{
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self {
+        Fixed {
+            raw: self.raw * rhs,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
