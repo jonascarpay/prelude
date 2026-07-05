@@ -9,7 +9,7 @@ pub mod ring;
 pub mod vector_space;
 
 pub use {
-    additive::Additive,
+    additive::{zero, Additive},
     euclidean_ring::EuclideanRing,
     functor::Functor,
     group::{Group, Monoid, Semigroup},

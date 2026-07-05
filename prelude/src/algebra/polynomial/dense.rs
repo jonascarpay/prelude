@@ -9,17 +9,17 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Polynomial<T, const COEFFS: usize> {
+pub struct DensePolynomial<T, const COEFFS: usize> {
     pub coefficients: [T; COEFFS],
 }
 
-pub type Linear<T> = Polynomial<T, 2>;
-pub type Quadratic<T> = Polynomial<T, 3>;
-pub type Cubic<T> = Polynomial<T, 4>;
-pub type Quartic<T> = Polynomial<T, 5>;
-pub type Quintic<T> = Polynomial<T, 6>;
+pub type Linear<T> = DensePolynomial<T, 2>;
+pub type Quadratic<T> = DensePolynomial<T, 3>;
+pub type Cubic<T> = DensePolynomial<T, 4>;
+pub type Quartic<T> = DensePolynomial<T, 5>;
+pub type Quintic<T> = DensePolynomial<T, 6>;
 
-impl<T: Additive, const COEFFS: usize> Polynomial<T, COEFFS> {
+impl<T: Additive, const COEFFS: usize> DensePolynomial<T, COEFFS> {
     pub fn from_scalar(x: T) -> Self {
         const {
             assert!(COEFFS > 0, "Empty polynomial");
@@ -30,11 +30,11 @@ impl<T: Additive, const COEFFS: usize> Polynomial<T, COEFFS> {
     }
 
     pub fn from_coefficients(coefficients: [T; COEFFS]) -> Self {
-        Polynomial { coefficients }
+        DensePolynomial { coefficients }
     }
 
     fn mult_x(self) -> Self {
-        Polynomial {
+        DensePolynomial {
             coefficients: std::array::from_fn(|i| {
                 if i == 0 {
                     T::zero()
@@ -90,21 +90,21 @@ impl<T: Additive, const COEFFS: usize> Polynomial<T, COEFFS> {
         eval_vector_space_horner(&self.coefficients, x)
     }
 
-    fn generic_derivative_ring<const OUT: usize>(self) -> Polynomial<T, OUT>
+    fn generic_derivative_ring<const OUT: usize>(self) -> DensePolynomial<T, OUT>
     where
         T: Ring,
     {
-        Polynomial {
+        DensePolynomial {
             coefficients: core::array::from_fn(|i| {
                 self.coefficients[i + 1].clone().imult((i + 1) as isize)
             }),
         }
     }
-    fn generic_derivative_vector_space<const OUT: usize>(self) -> Polynomial<T, OUT>
+    fn generic_derivative_vector_space<const OUT: usize>(self) -> DensePolynomial<T, OUT>
     where
         T: VectorSpace,
     {
-        Polynomial {
+        DensePolynomial {
             coefficients: core::array::from_fn(|i| {
                 self.coefficients[i + 1].clone().iscale((i + 1) as isize)
             }),
@@ -112,37 +112,37 @@ impl<T: Additive, const COEFFS: usize> Polynomial<T, COEFFS> {
     }
 }
 
-impl<T: Additive, const COEFFS: usize> Additive for Polynomial<T, COEFFS> {
+impl<T: Additive, const COEFFS: usize> Additive for DensePolynomial<T, COEFFS> {
     fn plus(self, rhs: Self) -> Self {
-        Polynomial {
+        DensePolynomial {
             coefficients: self.coefficients.plus(rhs.coefficients),
         }
     }
 
     fn zero() -> Self {
-        Polynomial {
+        DensePolynomial {
             coefficients: zero(),
         }
     }
 
     fn negate(self) -> Self {
-        Polynomial {
+        DensePolynomial {
             coefficients: self.coefficients.negate(),
         }
     }
 }
 
-impl<T: Ring, const COEFFS: usize> VectorSpace for Polynomial<T, COEFFS> {
+impl<T: Ring, const COEFFS: usize> VectorSpace for DensePolynomial<T, COEFFS> {
     type Scalar = T;
 
     fn scale(self, c: Self::Scalar) -> Self {
-        Polynomial {
+        DensePolynomial {
             coefficients: self.coefficients.scale(c),
         }
     }
 }
 
-impl<T, const COEFFS: usize> Deref for Polynomial<T, COEFFS> {
+impl<T, const COEFFS: usize> Deref for DensePolynomial<T, COEFFS> {
     type Target = [T];
 
     fn deref(&self) -> &[T] {
@@ -150,19 +150,19 @@ impl<T, const COEFFS: usize> Deref for Polynomial<T, COEFFS> {
     }
 }
 
-impl<T, const COEFFS: usize> DerefMut for Polynomial<T, COEFFS> {
+impl<T, const COEFFS: usize> DerefMut for DensePolynomial<T, COEFFS> {
     fn deref_mut(&mut self) -> &mut [T] {
         &mut self.coefficients
     }
 }
 
-impl<T, const COEFFS: usize> Functor for Polynomial<T, COEFFS> {
+impl<T, const COEFFS: usize> Functor for DensePolynomial<T, COEFFS> {
     type Param = T;
 
-    type Output<B> = Polynomial<B, COEFFS>;
+    type Output<B> = DensePolynomial<B, COEFFS>;
 
-    fn map<B, F: FnMut(Self::Param) -> B>(self, f: F) -> Polynomial<B, COEFFS> {
-        Polynomial {
+    fn map<B, F: FnMut(Self::Param) -> B>(self, f: F) -> DensePolynomial<B, COEFFS> {
+        DensePolynomial {
             coefficients: self.coefficients.map(f),
         }
     }
@@ -212,8 +212,8 @@ impl<T> Cubic<T> {
     }
 }
 
-impl_additive_ops!([T: Additive, const COEFFS: usize] Polynomial<T, COEFFS>);
-impl_vector_space_ops!([T: Ring + Copy, const COEFFS: usize] Polynomial<T, COEFFS>);
+impl_additive_ops!([T: Additive, const COEFFS: usize] DensePolynomial<T, COEFFS>);
+impl_vector_space_ops!([T: Ring + Copy, const COEFFS: usize] DensePolynomial<T, COEFFS>);
 
 #[inline(always)]
 pub fn eval_horner<T: Ring>(coeffs: &[T], x: T) -> T {
@@ -221,16 +221,6 @@ pub fn eval_horner<T: Ring>(coeffs: &[T], x: T) -> T {
         .iter()
         .rev()
         .fold(T::zero(), |acc, a| acc.mult(x.clone()).plus(a.clone()))
-}
-
-#[inline(always)]
-pub fn eval_horner_odd<T: Ring>(coeffs: &[T], x: T) -> T {
-    let x2 = x.clone().mult(x.clone());
-    coeffs
-        .iter()
-        .rev()
-        .fold(T::zero(), |acc, a| acc.mult(x2.clone()).plus(a.clone()))
-        .mult(x)
 }
 
 #[inline(always)]
@@ -263,7 +253,7 @@ mod tests {
             scale in -1000i64..=1000,
             roots in prop::array::uniform3(-1000i64..=1000),
         ) {
-            let p = Polynomial::<i64, 4>::from_scale_roots(scale, roots);
+            let p = DensePolynomial::<i64, 4>::from_scale_roots(scale, roots);
             for r in roots {
                 prop_assert_eq!(p.evaluate_ring(r), 0);
             }
