@@ -13,6 +13,16 @@ where
     f.map(|x| x.into())
 }
 
+impl<T, const N: usize> Functor for [T; N] {
+    type Param = T;
+
+    type Output<B> = [B; N];
+
+    fn map<B, F: FnMut(Self::Param) -> B>(self, f: F) -> Self::Output<B> {
+        self.map(f)
+    }
+}
+
 /* Implementation Template
     impl<T> Functor for MyFunctor<T> {
         type Param = T;
