@@ -33,6 +33,15 @@ impl<T: Additive, const COEFFS: usize> DensePolynomial<T, COEFFS> {
         DensePolynomial { coefficients }
     }
 
+    pub fn from_integer_coefficients(coefficients: [isize; COEFFS]) -> Self
+    where
+        T: Ring,
+    {
+        DensePolynomial {
+            coefficients: coefficients.map(|i| T::from_integer(i)),
+        }
+    }
+
     fn mult_x(self) -> Self {
         DensePolynomial {
             coefficients: std::array::from_fn(|i| {
