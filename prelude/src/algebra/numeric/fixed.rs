@@ -88,6 +88,13 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
             raw: self.raw & !(!(T::ZERO) << FRAC_BITS),
         }
     }
+
+    pub fn from_dyadic(significand: T, exponent: i32) -> Option<Self> {
+        let shift = exponent + FRAC_BITS as i32;
+        let shifted = significand << shift;
+        let round_trip = shifted >> shift;
+        (significand == round_trip).then_some(Self::from_raw(shifted))
+    }
 }
 
 impl<Scalar, T: Shl<Scalar>, const FRAC_BITS: u32> Shl<Scalar> for Fixed<T, FRAC_BITS> {
