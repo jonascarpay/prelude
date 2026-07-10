@@ -14,7 +14,7 @@ pub use {
     functor::Functor,
     group::{Group, Monoid, Semigroup},
     inner_product_space::InnerProductSpace,
-    ring::Ring,
+    ring::{one, Ring},
     vector_space::VectorSpace,
 };
 
