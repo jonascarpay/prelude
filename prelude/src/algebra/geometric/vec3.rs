@@ -13,7 +13,7 @@ pub struct V3<T> {
     pub z: T,
 }
 
-impl<T> V3<T> {
+impl<T: Additive> V3<T> {
     pub fn new(x: T, y: T, z: T) -> V3<T> {
         V3 { x, y, z }
     }
@@ -26,29 +26,29 @@ impl<T> V3<T> {
 }
 
 impl<T: Ring> V3<T> {
-    pub fn x() -> Self {
-        v3(T::one(), T::zero(), T::zero())
-    }
-    pub fn y() -> Self {
-        V3 {
-            x: T::zero(),
-            y: T::one(),
-            z: T::zero(),
-        }
-    }
-    pub fn z() -> Self {
-        V3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::one(),
-        }
-    }
-    pub fn basis() -> [Self; 3] {
-        [Self::x(), Self::y(), Self::z()]
-    }
+    pub const ZERO: Self = V3 {
+        x: T::ZERO,
+        y: T::ZERO,
+        z: T::ZERO,
+    };
+    pub const X: Self = V3 {
+        x: T::ONE,
+        ..Self::ZERO
+    };
+    pub const Y: Self = V3 {
+        y: T::ONE,
+        ..Self::ZERO
+    };
+    pub const Z: Self = V3 {
+        z: T::ONE,
+        ..Self::ZERO
+    };
+    pub const BASIS: [Self; 3] = [Self::X, Self::Y, Self::Z];
 }
 
 impl<T: Additive> Additive for V3<T> {
+    const ZERO: Self = Self::ZERO;
+
     fn plus(self, rhs: Self) -> Self {
         V3 {
             x: self.x.plus(rhs.x),
@@ -62,14 +62,6 @@ impl<T: Additive> Additive for V3<T> {
             x: self.x.minus(rhs.x),
             y: self.y.minus(rhs.y),
             z: self.z.minus(rhs.z),
-        }
-    }
-
-    fn zero() -> Self {
-        V3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
         }
     }
 
@@ -100,8 +92,16 @@ impl<T: Ring + Clone> InnerProductSpace for V3<T> {
     }
 
     fn inner(self, rhs: Self) -> Self::Scalar {
-        let V3 { x: x0, y: y0, z: z0 } = self;
-        let V3 { x: x1, y: y1, z: z1 } = rhs;
+        let V3 {
+            x: x0,
+            y: y0,
+            z: z0,
+        } = self;
+        let V3 {
+            x: x1,
+            y: y1,
+            z: z1,
+        } = rhs;
         x0.mult(x1).plus(y0.mult(y1)).plus(z0.mult(z1))
     }
 }

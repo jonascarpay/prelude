@@ -1,16 +1,14 @@
 use super::additive::Additive;
 
 pub trait Ring: Additive + Sized + Clone {
+    /// Identity element for `mult` such that `zero() != one()`
+    const ONE: Self;
+
     /// An associative operation, distributive w.r.t. `plus`
     fn mult(self, rhs: Self) -> Self;
 
     /// Integer homomorphism
     fn from_integer(i: isize) -> Self;
-
-    /// Identity element for `mult` such that `zero() != one()`
-    fn one() -> Self {
-        Self::from_integer(1)
-    }
 
     fn squared(self) -> Self {
         self.clone().mult(self)
@@ -25,7 +23,7 @@ pub trait Ring: Additive + Sized + Clone {
     }
 
     fn succ(self) -> Self {
-        self.plus(Self::one())
+        self.plus(Self::ONE)
     }
 
     // TODO implement in macros
@@ -34,8 +32,8 @@ pub trait Ring: Additive + Sized + Clone {
     }
 }
 
-pub fn one<R: Ring>() -> R {
-    R::one()
+pub const fn one<R: Ring>() -> R {
+    R::ONE
 }
 
 impl<A, B> Ring for (A, B)
@@ -43,14 +41,12 @@ where
     A: Ring,
     B: Ring,
 {
+    const ONE: Self = (A::ONE, B::ONE);
+
     fn mult(self, rhs: Self) -> Self {
         let (a0, a1) = self;
         let (b0, b1) = rhs;
         (a0.mult(b0), a1.mult(b1))
-    }
-
-    fn one() -> Self {
-        (A::one(), B::one())
     }
 
     fn from_integer(i: isize) -> Self {
@@ -64,17 +60,16 @@ where
     B: Ring,
     C: Ring,
 {
+    const ONE: Self = (A::ONE, B::ONE, C::ONE);
+
+    fn from_integer(i: isize) -> Self {
+        (A::from_integer(i), B::from_integer(i), C::from_integer(i))
+    }
+
     fn mult(self, rhs: Self) -> Self {
         let (a0, a1, a2) = self;
         let (b0, b1, b2) = rhs;
         (a0.mult(b0), a1.mult(b1), a2.mult(b2))
-    }
-
-    fn one() -> Self {
-        (A::one(), B::one(), C::one())
-    }
-    fn from_integer(i: isize) -> Self {
-        (A::from_integer(i), B::from_integer(i), C::from_integer(i))
     }
 }
 
@@ -85,15 +80,14 @@ where
     C: Ring,
     D: Ring,
 {
+    const ONE: Self = (A::ONE, B::ONE, C::ONE, D::ONE);
+
     fn mult(self, rhs: Self) -> Self {
         let (a0, a1, a2, a3) = self;
         let (b0, b1, b2, b3) = rhs;
         (a0.mult(b0), a1.mult(b1), a2.mult(b2), a3.mult(b3))
     }
 
-    fn one() -> Self {
-        (A::one(), B::one(), C::one(), D::one())
-    }
     fn from_integer(i: isize) -> Self {
         (
             A::from_integer(i),
@@ -105,14 +99,12 @@ where
 }
 
 impl<T: Ring, const N: usize> Ring for [T; N] {
+    const ONE: Self = std::array::from_fn(|_| T::ONE);
+
     fn mult(self, rhs: Self) -> Self {
         let mut lhs = self.into_iter();
         let mut rhs = rhs.into_iter();
         std::array::from_fn(|_| lhs.next().unwrap().mult(rhs.next().unwrap()))
-    }
-
-    fn one() -> Self {
-        std::array::from_fn(|_| T::one())
     }
 
     fn from_integer(i: isize) -> Self {
@@ -123,11 +115,9 @@ impl<T: Ring, const N: usize> Ring for [T; N] {
 macro_rules! impl_ring_modular {
     ($t:ty) => {
         impl Ring for $t {
+            const ONE: Self = 1;
             fn mult(self, rhs: Self) -> Self {
                 self.wrapping_mul(rhs)
-            }
-            fn one() -> Self {
-                1
             }
             fn from_integer(i: isize) -> Self {
                 i as $t
@@ -139,11 +129,9 @@ macro_rules! impl_ring_modular {
 macro_rules! impl_ring_float {
     ($t:ty) => {
         impl Ring for $t {
+            const ONE: Self = 1.0;
             fn mult(self, rhs: Self) -> Self {
                 self * rhs
-            }
-            fn one() -> Self {
-                1.0
             }
             fn from_integer(i: isize) -> Self {
                 i as $t

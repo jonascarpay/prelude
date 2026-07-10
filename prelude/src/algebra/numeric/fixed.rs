@@ -152,14 +152,12 @@ impl<T: Not<Output = T>, const FRAC_BITS: u32> Not for Fixed<T, FRAC_BITS> {
 }
 
 impl<T: Additive, const FRAC_BITS: u32> Additive for Fixed<T, FRAC_BITS> {
+    const ZERO: Self = Fixed { raw: T::ZERO };
+
     fn plus(self, rhs: Self) -> Self {
         Fixed {
             raw: self.raw.plus(rhs.raw),
         }
-    }
-
-    fn zero() -> Self {
-        Fixed { raw: T::zero() }
     }
 
     fn negate(self) -> Self {
@@ -183,6 +181,9 @@ impl<T: FixedBase, const FRAC_BITS: u32> VectorSpace for Fixed<T, FRAC_BITS> {
 }
 
 impl<T: FixedBase, const FRAC_BITS: u32> Ring for Fixed<T, FRAC_BITS> {
+    const ONE: Self = Fixed {
+        raw: T::ONE << FRAC_BITS,
+    };
     fn mult(self, rhs: Self) -> Self {
         let a = self.raw.widen();
         let b = rhs.raw.widen();
@@ -194,12 +195,6 @@ impl<T: FixedBase, const FRAC_BITS: u32> Ring for Fixed<T, FRAC_BITS> {
     fn from_integer(i: isize) -> Self {
         Fixed {
             raw: T::from_integer(i) << FRAC_BITS,
-        }
-    }
-
-    fn one() -> Self {
-        Fixed {
-            raw: T::one() << FRAC_BITS,
         }
     }
 }

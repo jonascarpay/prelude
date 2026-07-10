@@ -6,6 +6,7 @@ use std::{
 use crate::algebra::{
     abstract_::{additive::iter_sum_reduce, Additive, Monoid, Ring, Semigroup, VectorSpace},
     geometric::{vec2::V2, vec3::V3},
+    zero,
 };
 
 /// Alias for `Matrix::from_rows`.
@@ -25,15 +26,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 }
 
 impl<T: Additive, const R: usize, const C: usize> Additive for Matrix<T, R, C> {
+    const ZERO: Self = Matrix { rows: zero() };
+
     fn plus(self, rhs: Self) -> Self {
         Matrix {
             rows: self.rows.plus(rhs.rows),
-        }
-    }
-
-    fn zero() -> Self {
-        Matrix {
-            rows: repeat(repeat(T::zero())),
         }
     }
 
@@ -43,7 +40,14 @@ impl<T: Additive, const R: usize, const C: usize> Additive for Matrix<T, R, C> {
         }
     }
 }
+
 impl<T: Ring, const N: usize> Ring for Matrix<T, N, N> {
+    const ONE: Self = {
+        Matrix {
+            rows: from_fn(|r| from_fn(|c| if r == c { T::ONE } else { T::ZERO })),
+        }
+    };
+
     fn mult(self, rhs: Self) -> Self {
         generic_matmul(self, rhs, |a, b| T::mult(a.clone(), b.clone()))
     }
@@ -51,7 +55,7 @@ impl<T: Ring, const N: usize> Ring for Matrix<T, N, N> {
     fn from_integer(i: isize) -> Self {
         let i = T::from_integer(i);
         Matrix {
-            rows: from_fn(|r| from_fn(|c| if r == c { i.clone() } else { T::zero() })),
+            rows: from_fn(|r| from_fn(|c| if r == c { i.clone() } else { T::ZERO })),
         }
     }
 }
@@ -115,7 +119,15 @@ fn generic_vecmul<A, B, C: Additive, F: Fn(&A, &B) -> C, const ROW: usize, const
 }
 
 #[inline]
-fn generic_matmul<A, B, C: Additive, F: Fn(&A, &B) -> C, const ROW: usize, const HID: usize, const COL: usize>(
+fn generic_matmul<
+    A,
+    B,
+    C: Additive,
+    F: Fn(&A, &B) -> C,
+    const ROW: usize,
+    const HID: usize,
+    const COL: usize,
+>(
     a: Matrix<A, ROW, HID>,
     b: Matrix<B, HID, COL>,
     f: F,
@@ -125,7 +137,9 @@ fn generic_matmul<A, B, C: Additive, F: Fn(&A, &B) -> C, const ROW: usize, const
     }
 }
 
-impl<T: Ring, const R: usize, const H: usize, const C: usize> Mul<Matrix<T, H, C>> for Matrix<T, R, H> {
+impl<T: Ring, const R: usize, const H: usize, const C: usize> Mul<Matrix<T, H, C>>
+    for Matrix<T, R, H>
+{
     type Output = Matrix<T, R, C>;
     fn mul(self, rhs: Matrix<T, H, C>) -> Self::Output {
         generic_matmul(self, rhs, |a, b| a.clone().mult(b.clone()))
@@ -142,14 +156,18 @@ impl<T: Ring, const R: usize, const C: usize> Mul<[T; C]> for Matrix<T, R, C> {
 impl<T: Ring> Mul<V2<T>> for Matrix<T, 2, 2> {
     type Output = V2<T>;
     fn mul(self, rhs: V2<T>) -> V2<T> {
-        V2::unpack(generic_vecmul(self, rhs.pack(), |a, b| a.clone().mult(b.clone())))
+        V2::unpack(generic_vecmul(self, rhs.pack(), |a, b| {
+            a.clone().mult(b.clone())
+        }))
     }
 }
 
 impl<T: Ring> Mul<V3<T>> for Matrix<T, 3, 3> {
     type Output = V3<T>;
     fn mul(self, rhs: V3<T>) -> V3<T> {
-        V3::unpack(generic_vecmul(self, rhs.pack(), |a, b| a.clone().mult(b.clone())))
+        V3::unpack(generic_vecmul(self, rhs.pack(), |a, b| {
+            a.clone().mult(b.clone())
+        }))
     }
 }
 

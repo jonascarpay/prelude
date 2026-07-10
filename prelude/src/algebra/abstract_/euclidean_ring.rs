@@ -1,4 +1,4 @@
-use crate::algebra::abstract_::additive::OrderedAdditive;
+use crate::algebra::abstract_::additive::{EqAdditive as _, OrderedAdditive};
 
 use super::ring::Ring;
 
@@ -23,7 +23,7 @@ pub trait EuclideanRing: Ring + Sized {
 ///
 // TODO: might be worth making a trait method, since bignums might want to override with binary gcd
 pub fn gcd<T: EuclideanRing + Ord>(mut a: T, mut b: T) -> T {
-    while b != T::zero() {
+    while !b.is_zero() {
         let r = a.clone().rem_euclid(b.clone());
         a = b;
         b = r;
@@ -37,8 +37,8 @@ pub fn gcd<T: EuclideanRing + Ord>(mut a: T, mut b: T) -> T {
 /// `lcm(0, 0) == 0`.
 /// `lcm(0, a) == 0`.
 pub fn lcm<T: EuclideanRing + Ord>(a: T, b: T) -> T {
-    if a == T::zero() || b == T::zero() {
-        return T::zero();
+    if a.is_zero() || b.is_zero() {
+        return T::ZERO;
     }
     // Divide before multiplying to keep the intermediate small; `gcd` divides `a`
     // exactly, so the quotient is exact regardless of rounding direction.

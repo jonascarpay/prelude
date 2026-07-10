@@ -80,14 +80,12 @@ const DECODE_LUT: [u8; 256] = [
 /// - `a.negate()` is always 0.
 /// - `a - b !== a + (-b)`
 impl Additive for Unorm8 {
+    const ZERO: Self = Self::ZERO;
     fn plus(self, rhs: Self) -> Self {
         Unorm8(self.0.saturating_add(rhs.0))
     }
     fn minus(self, rhs: Self) -> Self {
         Unorm8(self.0.saturating_sub(rhs.0))
-    }
-    fn zero() -> Self {
-        Self::ZERO
     }
     fn negate(self) -> Self {
         Unorm8(0u8.saturating_sub(self.0))
@@ -101,11 +99,9 @@ impl Additive for Unorm8 {
 /// - `a*(b+c) !== a*b + a*c` due to rounding and saturation
 /// - `from_integer` not homomorphic because of saturation
 impl Ring for Unorm8 {
+    const ONE: Self = Self::ONE;
     fn mult(self, rhs: Self) -> Self {
         self.mult_blinn(rhs)
-    }
-    fn one() -> Self {
-        Self::ONE
     }
     fn from_integer(i: isize) -> Self {
         if i <= 0 {

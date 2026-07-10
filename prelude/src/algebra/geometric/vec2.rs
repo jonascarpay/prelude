@@ -23,33 +23,23 @@ pub const fn v2<T>(x: T, y: T) -> V2<T> {
     V2 { x, y }
 }
 
-impl<T> V2<T> {
+impl<T: Ring> V2<T> {
+    pub const ZERO: Self = Self {
+        x: T::ZERO,
+        y: T::ZERO,
+    };
+    pub const X: Self = V2 {
+        x: T::ONE,
+        ..Self::ZERO
+    };
+    pub const Y: Self = V2 {
+        y: T::ONE,
+        ..Self::ZERO
+    };
+    pub const BASIS: [Self; 2] = [Self::X, Self::Y];
+
     pub const fn new(x: T, y: T) -> V2<T> {
         V2 { x, y }
-    }
-    pub fn xunit() -> Self
-    where
-        T: Ring,
-    {
-        V2 {
-            x: T::one(),
-            y: T::zero(),
-        }
-    }
-    pub fn yunit() -> Self
-    where
-        T: Ring,
-    {
-        V2 {
-            x: T::zero(),
-            y: T::one(),
-        }
-    }
-    pub fn basis() -> [Self; 2]
-    where
-        T: Ring,
-    {
-        [Self::xunit(), Self::yunit()]
     }
     pub fn pack(self) -> [T; 2] {
         [self.x, self.y]
@@ -90,6 +80,7 @@ impl<T> Functor for V2<T> {
 }
 
 impl<T: Additive> Additive for V2<T> {
+    const ZERO: Self = Self::ZERO;
     fn plus(self, rhs: Self) -> Self {
         V2 {
             x: self.x.plus(rhs.x),
@@ -101,13 +92,6 @@ impl<T: Additive> Additive for V2<T> {
         V2 {
             x: self.x.minus(rhs.x),
             y: self.y.minus(rhs.y),
-        }
-    }
-
-    fn zero() -> Self {
-        V2 {
-            x: T::zero(),
-            y: T::zero(),
         }
     }
 

@@ -75,8 +75,8 @@ impl<T: Ring> Semigroup for Affine<T> {
 impl<T: Ring> Monoid for Affine<T> {
     fn identity() -> Self {
         Affine {
-            c1: T::one(),
-            c0: T::zero(),
+            c1: T::ONE,
+            c0: T::ZERO,
         }
     }
 }
@@ -92,6 +92,11 @@ impl<T: Field> Group for Affine<T> {
 }
 
 impl<T: Additive> Additive for Affine<T> {
+    const ZERO: Self = Affine {
+        c1: T::ZERO,
+        c0: T::ZERO,
+    };
+
     fn plus(self, rhs: Self) -> Self {
         Affine {
             c1: self.c1.plus(rhs.c1),
@@ -103,13 +108,6 @@ impl<T: Additive> Additive for Affine<T> {
         Affine {
             c1: self.c1.minus(rhs.c1),
             c0: self.c0.minus(rhs.c0),
-        }
-    }
-
-    fn zero() -> Self {
-        Affine {
-            c1: T::zero(),
-            c0: T::zero(),
         }
     }
 
@@ -133,7 +131,7 @@ impl<T: Ring + Copy> VectorSpace for Affine<T> {
 
 impl<T: Additive> From<T> for Affine<T> {
     fn from(c0: T) -> Self {
-        Affine { c0, ..Self::zero() }
+        Affine { c0, ..Self::ZERO }
     }
 }
 

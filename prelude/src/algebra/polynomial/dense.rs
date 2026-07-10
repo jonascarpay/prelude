@@ -122,15 +122,13 @@ impl<T: Additive, const COEFFS: usize> DensePolynomial<T, COEFFS> {
 }
 
 impl<T: Additive, const COEFFS: usize> Additive for DensePolynomial<T, COEFFS> {
+    const ZERO: Self = DensePolynomial {
+        coefficients: zero(),
+    };
+
     fn plus(self, rhs: Self) -> Self {
         DensePolynomial {
             coefficients: self.coefficients.plus(rhs.coefficients),
-        }
-    }
-
-    fn zero() -> Self {
-        DensePolynomial {
-            coefficients: zero(),
         }
     }
 
@@ -243,7 +241,7 @@ pub fn eval_vector_space_horner<V: VectorSpace>(coeffs: &[V], x: V::Scalar) -> V
 #[inline(always)]
 pub fn eval_vector_space<V: VectorSpace>(coeffs: &[V], x: V::Scalar) -> V {
     let mut acc = V::zero();
-    let mut power = <V::Scalar as Ring>::one();
+    let mut power = <V::Scalar as Ring>::ONE;
     for c in coeffs {
         acc = acc.plus(c.scaled(power.clone()));
         power = power.mult(x.clone());

@@ -2,6 +2,8 @@ use crate::algebra::abstract_::group::{Group, Monoid, Semigroup};
 
 /// An additive group
 pub trait Additive: Sized + Clone {
+    const ZERO: Self;
+
     // TODO: investigate whether it makes sense to have
     //   plus_ref: &T -> &T -> T
     //   plus_mut: &mut T -> T -> ()
@@ -12,9 +14,6 @@ pub trait Additive: Sized + Clone {
 
     /// An associative, commutative operation
     fn plus(self, rhs: Self) -> Self;
-
-    /// The identity element for `plus`
-    fn zero() -> Self;
 
     /// The inverse element for `plus`
     fn negate(self) -> Self;
@@ -44,13 +43,13 @@ pub trait Additive: Sized + Clone {
     //  - Multiplicative group ambiguity
 }
 
-pub fn zero<T: Additive>() -> T {
-    T::zero()
+pub const fn zero<T: Additive>() -> T {
+    T::ZERO
 }
 
 pub trait EqAdditive: Eq + Additive {
     fn is_zero(&self) -> bool {
-        self == &Self::zero()
+        self == &Self::ZERO
     }
 
     fn is_nonzero(&self) -> bool {
@@ -60,7 +59,7 @@ pub trait EqAdditive: Eq + Additive {
 
 pub trait OrderedAdditive: Ord + Additive {
     fn cmp_zero(&self) -> std::cmp::Ordering {
-        self.cmp(&Self::zero())
+        self.cmp(&Self::ZERO)
     }
 
     fn is_positive(&self) -> bool {
@@ -99,7 +98,7 @@ impl<T: Additive> Semigroup for AsAdditiveGroup<T> {
 
 impl<T: Additive> Monoid for AsAdditiveGroup<T> {
     fn identity() -> Self {
-        AsAdditiveGroup(T::zero())
+        AsAdditiveGroup(T::ZERO)
     }
 }
 
@@ -111,14 +110,14 @@ impl<T: Additive> Group for AsAdditiveGroup<T> {
 
 #[inline]
 pub fn iter_sum<T: Additive, I: IntoIterator<Item = T>>(i: I) -> T {
-    i.into_iter().fold(T::zero(), T::plus)
+    i.into_iter().fold(T::ZERO, T::plus)
 }
 
 /// Sum of an iterator, does not add 0 and the first element.
 /// Tends to optimizer better for small fixed-size iterators, worse for large/dynamic ones.
 #[inline]
 pub fn iter_sum_reduce<T: Additive, I: IntoIterator<Item = T>>(i: I) -> T {
-    i.into_iter().reduce(T::plus).unwrap_or(T::zero())
+    i.into_iter().reduce(T::plus).unwrap_or(T::ZERO)
 }
 
 pub fn step_by<T>(start: T, delta: T) -> ArithmeticSequence<T> {
@@ -156,8 +155,8 @@ impl<T: Additive> Iterator for ArithmeticSequence<T> {
 // impls //
 
 impl Additive for () {
+    const ZERO: Self = ();
     fn plus(self, _rhs: Self) -> Self {}
-    fn zero() -> Self {}
     fn negate(self) -> Self {}
 }
 
@@ -166,6 +165,7 @@ where
     A: Additive,
     B: Additive,
 {
+    const ZERO: Self = (A::ZERO, B::ZERO);
     fn plus(self, rhs: Self) -> Self {
         let (a0, a1) = self;
         let (b0, b1) = rhs;
@@ -175,10 +175,6 @@ where
         let (a0, a1) = self;
         let (b0, b1) = rhs;
         (a0.minus(b0), a1.minus(b1))
-    }
-
-    fn zero() -> Self {
-        (A::zero(), B::zero())
     }
 
     fn negate(self) -> Self {
@@ -193,6 +189,7 @@ where
     B: Additive,
     C: Additive,
 {
+    const ZERO: Self = (A::ZERO, B::ZERO, C::ZERO);
     fn plus(self, rhs: Self) -> Self {
         let (a0, a1, a2) = self;
         let (b0, b1, b2) = rhs;
@@ -202,10 +199,6 @@ where
         let (a0, a1, a2) = self;
         let (b0, b1, b2) = rhs;
         (a0.minus(b0), a1.minus(b1), a2.minus(b2))
-    }
-
-    fn zero() -> Self {
-        (A::zero(), B::zero(), C::zero())
     }
 
     fn negate(self) -> Self {
@@ -221,6 +214,7 @@ where
     C: Additive,
     D: Additive,
 {
+    const ZERO: Self = (A::ZERO, B::ZERO, C::ZERO, D::ZERO);
     fn plus(self, rhs: Self) -> Self {
         let (a0, a1, a2, a3) = self;
         let (b0, b1, b2, b3) = rhs;
@@ -230,10 +224,6 @@ where
         let (a0, a1, a2, a3) = self;
         let (b0, b1, b2, b3) = rhs;
         (a0.minus(b0), a1.minus(b1), a2.minus(b2), a3.minus(b3))
-    }
-
-    fn zero() -> Self {
-        (A::zero(), B::zero(), C::zero(), D::zero())
     }
 
     fn negate(self) -> Self {
@@ -256,9 +246,7 @@ impl<T: Additive, const N: usize> Additive for [T; N] {
         std::array::from_fn(|_| lhs.next().unwrap().minus(rhs.next().unwrap()))
     }
 
-    fn zero() -> Self {
-        std::array::from_fn(|_| T::zero())
-    }
+    const ZERO: Self = std::array::from_fn(|_| T::ZERO);
 
     fn negate(self) -> Self {
         self.map(T::negate)
@@ -268,14 +256,12 @@ impl<T: Additive, const N: usize> Additive for [T; N] {
 macro_rules! impl_additive_modular {
     ($t:ty) => {
         impl Additive for $t {
+            const ZERO: Self = 0;
             fn plus(self, rhs: Self) -> Self {
                 self.wrapping_add(rhs)
             }
             fn minus(self, rhs: Self) -> Self {
                 self.wrapping_sub(rhs)
-            }
-            fn zero() -> Self {
-                0
             }
             fn negate(self) -> Self {
                 self.wrapping_neg()
@@ -287,14 +273,12 @@ macro_rules! impl_additive_modular {
 macro_rules! impl_additive_float {
     ($t:ty) => {
         impl Additive for $t {
+            const ZERO: Self = 0.0;
             fn plus(self, rhs: Self) -> Self {
                 self + rhs
             }
             fn minus(self, rhs: Self) -> Self {
                 self - rhs
-            }
-            fn zero() -> Self {
-                0.0
             }
             fn negate(self) -> Self {
                 -self

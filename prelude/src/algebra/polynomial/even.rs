@@ -71,15 +71,13 @@ pub fn eval_even_horner<T: Ring>(coeffs: &[T], x: T) -> T {
 }
 
 impl<T: Additive, const COEFFS: usize> Additive for EvenPolynomial<T, COEFFS> {
+    const ZERO: Self = EvenPolynomial {
+        coefficients: zero(),
+    };
+
     fn plus(self, rhs: Self) -> Self {
         EvenPolynomial {
             coefficients: self.coefficients.plus(rhs.coefficients),
-        }
-    }
-
-    fn zero() -> Self {
-        EvenPolynomial {
-            coefficients: zero(),
         }
     }
 

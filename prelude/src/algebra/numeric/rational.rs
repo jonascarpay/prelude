@@ -38,6 +38,11 @@ impl<T> Ratio<T> {
 }
 
 impl<T: EuclideanRing + Ord> Additive for Ratio<T> {
+    const ZERO: Self = Ratio {
+        p: T::ZERO,
+        q: T::ONE,
+    };
+
     fn plus(self, rhs: Self) -> Self {
         // (pa / qa) + (pb / qb), combined over lcm(qa, qb) rather than qa*qb so the intermediate denominator stays as small.
         let Ratio { p: pa, q: qa } = self;
@@ -51,13 +56,6 @@ impl<T: EuclideanRing + Ord> Additive for Ratio<T> {
         reduce(p, lcm)
     }
 
-    fn zero() -> Self {
-        Ratio {
-            p: T::zero(),
-            q: T::one(),
-        }
-    }
-
     fn negate(self) -> Self {
         Ratio {
             p: self.p.negate(),
@@ -67,6 +65,11 @@ impl<T: EuclideanRing + Ord> Additive for Ratio<T> {
 }
 
 impl<T: EuclideanRing + Ord> Ring for Ratio<T> {
+    const ONE: Self = Ratio {
+        p: T::ONE,
+        q: T::ONE,
+    };
+
     fn mult(self, rhs: Self) -> Self {
         // (pa / qa) * (pb / qb) = pa pb / qa qb,
         // but we cancel the diagonals *before* multiplying.
@@ -82,12 +85,6 @@ impl<T: EuclideanRing + Ord> Ring for Ratio<T> {
     fn from_integer(i: isize) -> Self {
         Ratio {
             p: T::from_integer(i),
-            q: T::one(),
-        }
-    }
-    fn one() -> Self {
-        Self {
-            p: T::one(),
             q: T::one(),
         }
     }

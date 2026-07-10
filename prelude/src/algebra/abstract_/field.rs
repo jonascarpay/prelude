@@ -4,7 +4,7 @@ pub trait Field: Ring {
     /// Inverse element for `mult`.
     /// Behavior when self.is_zero() is undefined.
     fn recip(self) -> Self {
-        Self::one().div(self)
+        Self::ONE.div(self)
     }
 
     fn div(self, rhs: Self) -> Self;
@@ -12,7 +12,7 @@ pub trait Field: Ring {
     fn checked_div(self, rhs: Self) -> Option<Self>;
 
     fn checked_recip(self) -> Option<Self> {
-        Self::one().checked_div(self)
+        Self::ONE.checked_div(self)
     }
 
     fn from_rational(p: isize, q: isize) -> Self {

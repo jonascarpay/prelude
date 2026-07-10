@@ -5,6 +5,7 @@ pub trait Semigroup {
 
 pub trait Monoid: Semigroup {
     /// The identity element for `compose`
+    // TODO: constant
     fn identity() -> Self;
 }
 

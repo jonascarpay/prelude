@@ -13,18 +13,17 @@ pub struct Complex<T> {
 }
 
 impl<T: Ring + Clone> Complex<T> {
-    pub fn i() -> Self {
-        Self::xy()
-    }
-    pub fn xy() -> Self {
-        Complex {
-            s: T::zero(),
-            xy: T::one(),
-        }
-    }
-    pub fn basis() -> [Self; 2] {
-        [Complex::one(), Self::xy()]
-    }
+    pub const ONE: Self = Complex {
+        s: T::ONE,
+        xy: T::ZERO,
+    };
+    pub const XY: Self = Complex {
+        s: T::ZERO,
+        xy: T::ONE,
+    };
+    pub const I: Self = Self::XY;
+    pub const BASIS: [Self; 2] = [Self::ONE, Self::XY];
+
     // This is the same as reverse, and might be moved to a type class at some point
     pub fn conjugate(self) -> Self {
         Complex {
@@ -44,6 +43,7 @@ impl Complex<f64> {
 }
 
 impl<T: Additive> Additive for Complex<T> {
+    const ZERO: Self = Self::ZERO;
     fn minus(self, rhs: Self) -> Self {
         self.plus(rhs.negate())
     }
@@ -52,13 +52,6 @@ impl<T: Additive> Additive for Complex<T> {
         Complex {
             s: self.s.plus(rhs.s),
             xy: self.xy.plus(rhs.xy),
-        }
-    }
-
-    fn zero() -> Self {
-        Complex {
-            s: T::zero(),
-            xy: T::zero(),
         }
     }
 
@@ -105,12 +98,14 @@ impl<T: Ring> From<T> for Complex<T> {
     fn from(value: T) -> Self {
         Complex {
             s: value,
-            xy: T::zero(),
+            xy: T::ZERO,
         }
     }
 }
 
 impl<T: Ring + Clone> Ring for Complex<T> {
+    const ONE: Self = Self::ONE;
+
     fn mult(self, rhs: Self) -> Self {
         // (a + bi) (c + di)
         // ac + adi + bci - bd
@@ -123,17 +118,10 @@ impl<T: Ring + Clone> Ring for Complex<T> {
         }
     }
 
-    fn one() -> Self {
-        Complex {
-            s: T::one(),
-            xy: T::zero(),
-        }
-    }
-
     fn from_integer(i: isize) -> Self {
         Complex {
             s: T::from_integer(i),
-            xy: T::zero(),
+            ..Self::ZERO
         }
     }
 }

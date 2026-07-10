@@ -59,15 +59,13 @@ pub fn eval_odd_horner<T: Ring>(coeffs: &[T], x: T) -> T {
 }
 
 impl<T: Additive, const COEFFS: usize> Additive for OddPolynomial<T, COEFFS> {
+    const ZERO: Self = OddPolynomial {
+        coefficients: zero(),
+    };
+
     fn plus(self, rhs: Self) -> Self {
         OddPolynomial {
             coefficients: self.coefficients.plus(rhs.coefficients),
-        }
-    }
-
-    fn zero() -> Self {
-        OddPolynomial {
-            coefficients: zero(),
         }
     }
 
