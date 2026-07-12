@@ -97,7 +97,7 @@ impl<T: Ring + Copy> InnerProductSpace for Complex<T> {
         // 1/2 (aa + cc + 2ac + bb + dd + 2bd - aa - cc - bb - dd)
         // 1/2 (2ac + 2bd)
         // ac + bd
-        self.s.mult(rhs.s).plus(self.xy.plus(rhs.xy))
+        self.s.mult(rhs.s).plus(self.xy.mult(rhs.xy))
     }
 }
 
