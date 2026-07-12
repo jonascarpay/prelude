@@ -7,3 +7,4 @@
 cc df85c89d635020abc14117151e99d7d7be8b6f37066bd05ae61aa5c57486f481 # shrinks to a = Fixed { raw: 0 }
 cc 2195ff610a71e6c44c0edb92a202c65038682c6590cc02b65af6fd5559628eae # shrinks to a = Fixed { raw: 129 }, b = Fixed { raw: -1 }
 cc db57941a9dbca2c50390fbae261f81a63caf34a0bf678c0515e6aab16480e230 # shrinks to a = Fixed { raw: 198 }, b = Fixed { raw: -246 }, c = Fixed { raw: -231 }
+cc 3714972ce2083b5440e5776750347f675dacaae2377f8e9a5fec054264c203ec # shrinks to sig = 0, exp = 8

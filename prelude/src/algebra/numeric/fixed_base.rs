@@ -17,13 +17,15 @@ pub trait FixedBase:
     type Wide: EuclideanRing + Shl<u32, Output = Self::Wide> + Shr<u32, Output = Self::Wide>;
     const MIN: Self;
     const MAX: Self;
-    const ZERO: Self;
-    const ONE: Self;
-    const BITS: u32;
+    const ZERO: Self; // TODO from Additive
+    const ONE: Self; // TODO from Ring
+    const BITS: u32; // TODO unused
     fn widen(self) -> Self::Wide;
     fn narrow(wide: Self::Wide) -> Self;
-    fn leading_zeros(self) -> u32;
-    fn trailing_zeros(self) -> u32;
+    fn leading_zeros(self) -> u32; // TODO unused, remove
+    fn trailing_zeros(self) -> u32; // TODO unused, remove
+    fn checked_shl(self, rhs: u32) -> Option<Self>;
+    fn checked_shr(self, rhs: u32) -> Option<Self>;
     fn from_f64(x: f64) -> Self;
     fn to_f64(self) -> f64;
     // May be moved to a trait at some point
@@ -44,6 +46,12 @@ macro_rules! impl_fixed_base {
             }
             fn trailing_zeros(self) -> u32 {
                 self.trailing_zeros()
+            }
+            fn checked_shl(self, rhs: u32) -> Option<Self> {
+                <$narrow>::checked_shl(self, rhs)
+            }
+            fn checked_shr(self, rhs: u32) -> Option<Self> {
+                <$narrow>::checked_shr(self, rhs)
             }
             fn widen(self) -> $wide {
                 self as $wide

@@ -2,10 +2,9 @@ use std::ops::{BitAnd, BitOr, BitXor, Not, Range, Shl, Shr};
 
 use crate::{
     algebra::{
-        abstract_::{
-            euclidean_ring::EuclideanRing, field::Field, real::Real, Additive, Ring, VectorSpace,
-        },
+        abstract_::{field::Field, real::Real, EuclideanRing as _},
         numeric::fixed_base::FixedBase,
+        Additive, Ring, VectorSpace,
     },
     impl_additive_ops, impl_ring_ops,
 };
@@ -90,10 +89,19 @@ impl<T: FixedBase, const FRAC_BITS: u32> Fixed<T, FRAC_BITS> {
     }
 
     pub fn from_dyadic(significand: T, exponent: i32) -> Option<Self> {
+        // The fun way to do this is to calculate the net shift, and then see if the significand has
+        // enough {leading, trailing}_zeros() to accomodate, but unfortunately that doesn't work for
+        // negative numbers. So, we simply roundtrip.
         let shift = exponent + FRAC_BITS as i32;
-        let shifted = significand << shift;
-        let round_trip = shifted >> shift;
-        (significand == round_trip).then_some(Self::from_raw(shifted))
+        if shift >= 0 {
+            let shift = shift as u32;
+            let shifted = significand.checked_shl(shift)?; // Catch shift > bits
+            (shifted >> shift == significand).then_some(Self::from_raw(shifted))
+        } else {
+            let shift = shift.unsigned_abs();
+            let shifted = significand.checked_shr(shift)?; // Catch shift > bits
+            (shifted << shift == significand).then_some(Self::from_raw(shifted))
+        }
     }
 }
 
@@ -244,7 +252,7 @@ impl<T: FixedBase, const FRAC_BITS: u32> Real for Fixed<T, FRAC_BITS> {
         todo!()
     }
 
-    fn atan2(self, x: Self) -> Self {
+    fn atan2(self, _x: Self) -> Self {
         todo!()
     }
 }
@@ -345,6 +353,18 @@ mod tests {
             let f = a.fract();
             prop_assert_eq!((t << 8) + f.repr(), a.repr());
             prop_assert!((0..256).contains(&f.repr()));
+        }
+
+        #[test]
+        fn from_dyadic_never_panics(sig in any::<i16>(), exp in -40i32..=40) {
+            let _ = I::from_dyadic(sig, exp);
+        }
+
+        #[test]
+        fn from_dyadic_roundtrip(sig in any::<i16>(), exp in -40i32..=40) {
+            if let Some(f) = I::from_dyadic(sig, exp) {
+                prop_assert_eq!(f.to_f64() * 2f64.powi(-exp), sig as f64);
+            }
         }
     }
 
