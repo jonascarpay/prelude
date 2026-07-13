@@ -20,6 +20,7 @@ where
     fn scaled(&self, c: Self::Scalar) -> Self {
         self.clone().scale(c)
     }
+    // TODO: move to additive
     fn iscale(self, c: isize) -> Self {
         self.scale(Self::Scalar::from_integer(c))
     }
